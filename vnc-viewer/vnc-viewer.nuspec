@@ -5,11 +5,11 @@
     <version>7.7.0</version>
     <title>VNC Viewer (Install)</title>
     <authors>RealVNC Limited.</authors>
-    <owners>bcurran3</owners>
+    <owners>arrrghhh</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://www.realvnc.com/legal/</licenseUrl>
     <projectUrl>https://www.realvnc.com/products/vnc/</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/bcurran3/ChocolateyPackages/master/vnc-viewer/vnc-viewer_icon.png</iconUrl>
+    <iconUrl>https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_icon.png</iconUrl>
     <description>---
 
 ### [choco://vnc-viewer](choco://vnc-viewer)
@@ -17,7 +17,7 @@ To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ]
 
 ---
 
-![Screen shot of VNC Viewer](https://raw.githubusercontent.com/bcurran3/ChocolateyPackages/master/vnc-viewer/vnc-viewer_screenshot.png)
+![Screen shot of VNC Viewer](https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_screenshot.png)
 
 Make sure you've downloaded VNC Connect to the computer you want to control.
 
@@ -32,14 +32,14 @@ VNC Viewer is used to remote control RealVNC and VNC Connect hosts.
 **VERSIONS ON OTHER PLATFORMS:**
 [Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chrome.google.com/webstore/detail/vnc%C2%AE-viewer-for-google-ch/iabmpiboiopbgfabjmgeedhcmjenhbla) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) |[Linux Client](https://www.realvnc.com/download/viewer/linux/)
 
-**[PACKAGE NOTES](https://github.com/bcurran3/ChocolateyPackages/blob/master/vnc-viewer/readme.md)**
+**[PACKAGE NOTES](https://github.com/arrrghhh/ChocolateyPackages/blob/main/vnc-viewer/readme.md)**
 
 ---</description>
     <summary>VNC Viewer is used to remote control RealVNC and VNC Connect hosts.</summary>
     <releaseNotes>https://www.realvnc.com/docs/desktop-release-notes.html</releaseNotes>
     <copyright>Copyright © RealVNC Limited. All rights reserved.</copyright>
     <tags>realvnc vnc connect viewer remote control</tags>
-    <packageSourceUrl>https://github.com/bcurran3/ChocolateyPackages/tree/master/vnc-viewer</packageSourceUrl>
+    <packageSourceUrl>https://github.com/arrrghhh/ChocolateyPackages/tree/main/vnc-viewer</packageSourceUrl>
     <docsUrl>https://help.realvnc.com/</docsUrl>
     <bugTrackerUrl>https://help.realvnc.com/hc/en-us/community/topics</bugTrackerUrl>
   </metadata>
