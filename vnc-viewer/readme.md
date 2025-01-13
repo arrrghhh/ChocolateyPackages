@@ -1,4 +1,4 @@
-<h3>arrrghhh'S PACKAGE NOTES:</h3>
+<h3>arrrghhh's package notes:</h3>
 
 * This package downloads the installer via a version specific URL. It should never fail unless the version is completely removed from the vendor website.
 * I use and endorse this program.
