@@ -9,7 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://www.realvnc.com/legal/</licenseUrl>
     <projectUrl>https://www.realvnc.com/products/vnc/</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_icon.png</iconUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_icon.png</iconUrl>
     <description>---
 
 ### [choco://vnc-viewer](choco://vnc-viewer)
@@ -17,7 +17,7 @@ To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ]
 
 ---
 
-![Screen shot of VNC Viewer](https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_screenshot.png)
+![Screen shot of VNC Viewer](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_screenshot.png)
 
 Make sure you've downloaded VNC Connect to the computer you want to control.
 
