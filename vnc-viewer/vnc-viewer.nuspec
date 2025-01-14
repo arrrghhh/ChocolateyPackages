@@ -28,7 +28,7 @@ Make sure you've downloaded VNC Connect to the computer you want to control.
 [VNC-Connect](https://chocolatey.org/packages/vnc-connect/)
 
 **CLIENT SOFTWARE:**
-[Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
+[Android App](https://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
 
 ---
 
