@@ -8,7 +8,7 @@
 
 ## VNC Viewer (Install)
 
-![Screen shot of VNC Viewer](https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_screenshot.png)
+![Screen shot of VNC Viewer](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_screenshot.png)
 
 **SOCIAL MEDIA:**
 [Facebook](https://www.facebook.com/realvnc) | [Twitter](https://twitter.com/realvnc) | [Linkedin](https://www.linkedin.com/company/realvnc) | [YouTube](https://www.youtube.com/user/RealVNCLtd)
@@ -26,7 +26,7 @@ To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ]
 ### Package-specific issue
 If this package isn't up-to-date for some days, [Create an issue](https://github.com/arrrghhh/ChocolateyPackages/issues/new/choose)
 
-Support the package maintainer and [![Patreon](https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
+Support the package maintainer on [![Patreon](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
 
 ---
 
