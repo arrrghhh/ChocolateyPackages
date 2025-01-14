@@ -16,8 +16,8 @@
 **CLIENT SOFTWARE:**
 [Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
 
-**SERVER SOFTWARE:**
-[Windows Server](http://chocolatey.org/packages/vnc-connect
+**VNC SERVER SOFTWARE:**
+[VNC-Connect](https://chocolatey.org/packages/vnc-connect/)
 ---
 
 #### [choco://vnc-connect](choco://vnc-connect)
@@ -31,5 +31,3 @@ Support the package maintainer and [![Patreon](https://raw.githubusercontent.com
 ---
 
 If applicable, please always consider donating or purchasing the software you installed - including [Chocolatey's licensed editions](https://chocolatey.org/pricing).
-
-<h3>arrrghhh</h3>
