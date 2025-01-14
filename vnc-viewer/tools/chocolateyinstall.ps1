@@ -4,8 +4,9 @@ $packageName    = 'vnc-viewer'
 $toolsDir       = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 $bits           = Get-ProcessorBits
 $extractDir     = "$toolsDir\extracted"
-$url            = "https://downloads.realvnc.com/download/file/viewer.files/VNC-Viewer-$env:ChocolateyPackageVersion-Windows-msi.zip"
-$checksum       = '6E716F0F3FE19946BCF6E425FB96C4B67C87CF3CFB85B13E03DB1A2122C99679'
+$url            = 'https://downloads.realvnc.com/download/file/viewer.files/VNC-Viewer-7.13.1-Windows-msi.zip'
+$checksum       = 'dc545e0d31987722b2674c50f2dac243566598159213b6eeea4d959fdecacee9'
+$checksumType   = 'sha256'
 
 $packageArgs = @{
   packageName   = $packageName
@@ -13,7 +14,7 @@ $packageArgs = @{
   fileType      = 'ZIP' 
   url           = $url
   checksum      = $checksum
-  checksumType  = 'sha256'
+  checksumType  = $checksumType
 }
 
 Install-ChocolateyZipPackage @packageArgs 

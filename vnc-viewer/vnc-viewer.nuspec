@@ -1,8 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>vnc-viewer</id>
-    <version>7.7.0</version>
+    <version>7.13.1</version>
     <title>VNC Viewer (Install)</title>
     <authors>RealVNC Limited.</authors>
     <owners>arrrghhh</owners>
@@ -10,18 +10,18 @@
     <licenseUrl>https://www.realvnc.com/legal/</licenseUrl>
     <projectUrl>https://www.realvnc.com/products/vnc/</projectUrl>
     <iconUrl>https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_icon.png</iconUrl>
-    <description>---
+    <description><![CDATA[* This package downloads the installer via a version specific URL. It should never fail unless the version is completely removed from the vendor website.
 
-### [choco://vnc-viewer](choco://vnc-viewer)
-To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ](https://chocolatey.org/packages/choco-protocol-support)
-
----
-
+***
 ![Screen shot of VNC Viewer](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_screenshot.png)
+
+[![](https://img.shields.io/chocolatey/v/vnc-viewer?color=green&label=vnc-viewer)](https://chocolatey.org/packages/vnc-viewer) [![](https://img.shields.io/chocolatey/dt/vnc-viewer)](https://chocolatey.org/packages/vnc-viewer)
 
 Make sure you've downloaded VNC Connect to the computer you want to control.
 
-VNC Viewer is used to remote control RealVNC and VNC Connect hosts.
+## VNC Viewer (Install)
+
+![Screen shot of VNC Viewer](https://raw.githubusercontent.com/arrrghhh/ChocolateyPackages/refs/heads/main/vnc-viewer/vnc-viewer_screenshot.png)
 
 **SOCIAL MEDIA:**
 [Facebook](https://www.facebook.com/realvnc) | [Twitter](https://twitter.com/realvnc) | [Linkedin](https://www.linkedin.com/company/realvnc) | [YouTube](https://www.youtube.com/user/RealVNCLtd)
@@ -29,12 +29,26 @@ VNC Viewer is used to remote control RealVNC and VNC Connect hosts.
 **VNC SERVER SOFTWARE:**
 [VNC-Connect](https://chocolatey.org/packages/vnc-connect/)
 
-**VERSIONS ON OTHER PLATFORMS:**
-[Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chrome.google.com/webstore/detail/vnc%C2%AE-viewer-for-google-ch/iabmpiboiopbgfabjmgeedhcmjenhbla) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) |[Linux Client](https://www.realvnc.com/download/viewer/linux/)
+**CLIENT SOFTWARE:**
+[Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
 
+---
+
+#### [choco://vnc-connect](choco://vnc-connect)
+To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ](https://chocolatey.org/packages/choco-protocol-support)
+
+### Package-specific issue
+If this package isn't up-to-date for some days, [Create an issue](https://github.com/arrrghhh/ChocolateyPackages/issues/new/choose)
+
+Support the package maintainer and [![Patreon](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
+
+---
 **[PACKAGE NOTES](https://github.com/arrrghhh/ChocolateyPackages/blob/main/vnc-viewer/readme.md)**
 
----</description>
+If applicable, please always consider donating or purchasing the software you installed - including [Chocolatey's licensed editions](https://chocolatey.org/pricing).
+
+<h3>arrrghhh</h3>
+]]></description>
     <summary>VNC Viewer is used to remote control RealVNC and VNC Connect hosts.</summary>
     <releaseNotes>https://www.realvnc.com/docs/desktop-release-notes.html</releaseNotes>
     <copyright>Copyright © RealVNC Limited. All rights reserved.</copyright>
