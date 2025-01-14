@@ -13,8 +13,6 @@
     <description><![CDATA[* This package downloads the installer via a version specific URL. It should never fail unless the version is completely removed from the vendor website.
 
 ***
-![Screen shot of VNC Viewer](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/vnc-viewer_screenshot.png)
-
 [![](https://img.shields.io/chocolatey/v/vnc-viewer?color=green&label=vnc-viewer)](https://chocolatey.org/packages/vnc-viewer) [![](https://img.shields.io/chocolatey/dt/vnc-viewer)](https://chocolatey.org/packages/vnc-viewer)
 
 Make sure you've downloaded VNC Connect to the computer you want to control.
@@ -40,7 +38,7 @@ To use choco:// protocol URLs, install [(unofficial) choco:// Protocol support ]
 ### Package-specific issue
 If this package isn't up-to-date for some days, [Create an issue](https://github.com/arrrghhh/ChocolateyPackages/issues/new/choose)
 
-Support the package maintainer and [![Patreon](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
+Support the package maintainer on [![Patreon](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
 
 ---
 **[PACKAGE NOTES](https://github.com/arrrghhh/ChocolateyPackages/blob/main/vnc-viewer/readme.md)**
