@@ -54,4 +54,7 @@ If applicable, please always consider donating or purchasing the software you in
     <docsUrl>https://help.realvnc.com/</docsUrl>
     <bugTrackerUrl>https://help.realvnc.com/hc/en-us/community/topics</bugTrackerUrl>
   </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
 </package>
