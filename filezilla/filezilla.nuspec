@@ -47,7 +47,7 @@ FileZilla Client is a fast and reliable cross-platform FTP, FTPS and SFTP client
     <docsUrl>https://wiki.filezilla-project.org/Documentation</docsUrl>
     <releaseNotes>https://filezilla-project.org/changelog.php</releaseNotes>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <iconUrl>https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages@master/filezilla.svg</iconUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages@master/filezilla/filezilla.svg</iconUrl>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />
