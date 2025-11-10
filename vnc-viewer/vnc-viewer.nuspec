@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>vnc-viewer</id>
-    <version>7.13.1</version>
+    <version>7.15.1</version>
     <title>VNC Viewer (Install)</title>
     <authors>RealVNC Limited.</authors>
     <owners>arrrghhh</owners>
@@ -13,9 +13,8 @@
     <description><![CDATA[* This package downloads the installer via a version specific URL. It should never fail unless the version is completely removed from the vendor website.
 
 ***
-[![](https://img.shields.io/chocolatey/v/vnc-viewer?color=green&label=vnc-viewer)](https://chocolatey.org/packages/vnc-viewer) [![](https://img.shields.io/chocolatey/dt/vnc-viewer)](https://chocolatey.org/packages/vnc-viewer)
 
-Make sure you've downloaded VNC Connect to the computer you want to control.
+[![](https://img.shields.io/chocolatey/v/vnc-viewer?color=green&label=vnc-viewer)](https://chocolatey.org/packages/vnc-viewer) [![](https://img.shields.io/chocolatey/dt/vnc-viewer)](https://chocolatey.org/packages/vnc-viewer)
 
 ## VNC Viewer (Install)
 
@@ -24,12 +23,11 @@ Make sure you've downloaded VNC Connect to the computer you want to control.
 **SOCIAL MEDIA:**
 [Facebook](https://www.facebook.com/realvnc) | [Twitter](https://twitter.com/realvnc) | [Linkedin](https://www.linkedin.com/company/realvnc) | [YouTube](https://www.youtube.com/user/RealVNCLtd)
 
+**CLIENT SOFTWARE:**
+[Android App](http://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
+
 **VNC SERVER SOFTWARE:**
 [VNC-Connect](https://chocolatey.org/packages/vnc-connect/)
-
-**CLIENT SOFTWARE:**
-[Android App](https://play.google.com/store/apps/details?id=com.realvnc.viewer.android) | [iOS App](https://itunes.apple.com/us/app/vnc-viewer/id352019548?mt=8) | [Chrome Extension](https://chocolatey.org/packages/vnc-viewer-chrome/1.2.2.15132) | [macOS Client](https://www.realvnc.com/download/viewer/macos/) | [Linux Client](https://www.realvnc.com/download/viewer/linux/)
-
 ---
 
 #### [choco://vnc-connect](choco://vnc-connect)
@@ -41,10 +39,8 @@ If this package isn't up-to-date for some days, [Create an issue](https://github
 Support the package maintainer on [![Patreon](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages/vnc-viewer/Patreon-Button-600x163.webp)](https://www.patreon.com/arrrghhh)
 
 ---
-**[PACKAGE NOTES](https://github.com/arrrghhh/ChocolateyPackages/blob/main/vnc-viewer/readme.md)**
 
 If applicable, please always consider donating or purchasing the software you installed - including [Chocolatey's licensed editions](https://chocolatey.org/pricing).
-
 ]]></description>
     <summary>VNC Viewer is used to remote control RealVNC and VNC Connect hosts.</summary>
     <releaseNotes>https://www.realvnc.com/docs/desktop-release-notes.html</releaseNotes>
