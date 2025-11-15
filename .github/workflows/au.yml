@@ -15,7 +15,9 @@ jobs:
 
       - name: Install Chocolatey
         uses: crazy-max/ghaction-chocolatey@v3
-
+        with:
+          args: ''
+          
       - name: Install AU module
         shell: powershell
         run: |
