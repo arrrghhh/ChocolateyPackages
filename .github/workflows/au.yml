@@ -14,9 +14,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Chocolatey
-        uses: crazy-max/ghaction-chocolatey@v3
-        with:
-          args: ''
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
           
       - name: Install AU module
         shell: powershell
