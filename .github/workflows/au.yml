@@ -8,6 +8,8 @@ on:
 jobs:
   update:
     runs-on: windows-latest
+    env:
+      CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
 
     steps:
       - name: Checkout Repo
@@ -20,7 +22,6 @@ jobs:
           [System.Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-          
       - name: Install AU module
         shell: powershell
         run: |
