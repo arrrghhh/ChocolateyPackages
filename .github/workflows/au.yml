@@ -35,10 +35,11 @@ jobs:
         shell: powershell
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update.ps1
+          $env:au_whatif = 'true'
+          ./vnc-viewer/update.ps1
 
       - name: Push updated package(s)
         shell: powershell
         run: |
           import-module au
-          au push
+          #au push
