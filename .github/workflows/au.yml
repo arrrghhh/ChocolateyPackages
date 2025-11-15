@@ -1,0 +1,44 @@
+name: Chocolatey Automatic Updater
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"   # Runs every day at 2am UTC
+
+jobs:
+  update:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Install Chocolatey
+        uses: crazy-max/ghaction-chocolatey@v3
+
+      - name: Install AU module
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          choco install au -y
+
+      - name: Configure API key
+        shell: powershell
+        run: |
+          choco apiKey add -s https://push.chocolatey.org/ `
+            -k $env:CHOCO_API_KEY
+
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+
+      - name: Run update.ps1
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          ./update.ps1
+
+      - name: Push updated package(s)
+        shell: powershell
+        run: |
+          import-module au
+          au push
