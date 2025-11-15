@@ -34,15 +34,14 @@ jobs:
           choco apiKey add -s https://push.chocolatey.org/ `
             -k $env:CHOCO_API_KEY
 
-        env:
-          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
-
       - name: Run update.ps1
         shell: powershell
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $env:au_whatif = 'true'
-          ./vnc-viewer/update.ps1
+          Push-Location ./vnc-viewer
+          ./update.ps1
+          Pop-Location
 
       - name: Push updated package(s)
         shell: powershell
