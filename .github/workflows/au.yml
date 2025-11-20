@@ -28,12 +28,6 @@ jobs:
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
       
-      - name: Install pwsh
-        shell: powershell
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          choco install pwsh -force -y
-
       - name: Configure API key
         shell: powershell
         run: |
@@ -50,7 +44,7 @@ jobs:
       #     Pop-Location
       
       - name: Run filezilla update.ps1
-        shell: powershell
+        shell: pwsh
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $env:au_whatif = 'true'
