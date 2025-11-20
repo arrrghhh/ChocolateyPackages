@@ -39,7 +39,7 @@ function Ensure-Module {
     throw "FATAL: Module '$Name' is missing and could not be installed."
 }
 
-Ensure-Module -Name 'Chocolatey-AU'
+#Ensure-Module -Name 'Chocolatey-AU' # Shouldn't be needed to import this module when using GH Actions as it's already loaded...
 Ensure-Module -Name 'Selenium'
 
 if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
