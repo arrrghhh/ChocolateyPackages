@@ -1,6 +1,4 @@
-﻿Import-Module Chocolatey-AU
-
-$PackageId   = "filezilla"
+﻿$PackageId   = "filezilla"
 $ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
 $ToolsDir    = "$PSScriptRoot\tools"
 
