@@ -40,6 +40,8 @@ function Ensure-Module {
 #Ensure-Module -Name 'Chocolatey-AU' # Shouldn't be needed to import this module when using GH Actions as it's already loaded...
 Ensure-Module -Name 'Selenium'
 
+Get-Module Selenium -ListAvailable
+
 if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
 	& ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
 }
