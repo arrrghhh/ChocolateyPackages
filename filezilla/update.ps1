@@ -1,44 +1,148 @@
-﻿Import-Module Chocolatey-AU
+# ==============================
+#   update.ps1 — FileZilla AU
+# ==============================
 
-$releases = 'https://filezilla-project.org/download.php?show_all=1'
+Import-Module Chocolatey-AU
+Import-Module Selenium
 
+$PackageId   = "filezilla"
+$ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
+$ToolsDir    = "$PSScriptRoot\tools"
+
+# ------------------------------------------------------------
+# Step 0 — Helper: Check if update is needed
+# ------------------------------------------------------------
+function Test-UpdateNeeded {
+    param($LatestVersion)
+
+    Write-Host "Checking Chocolatey for existing/pending versions..."
+
+    # Get all known versions from Chocolatey API
+    $ApiUrl = "https://community.chocolatey.org/api/v2/Packages()?"
+    $ApiUrl += "`$filter=(Id eq '$PackageId')&includePrerelease=true"
+
+    $AvailablePackages = Invoke-RestMethod $ApiUrl
+
+    # Skip if exact version exists
+    if ($LatestVersion -in $AvailablePackages.properties.version) {
+        Write-Host "$PackageId $LatestVersion already published → skipping update."
+        return $false
+    }
+
+    # Check if version is submitted but not approved
+    try {
+        $SpecificUrl = "https://community.chocolatey.org/api/v2/Packages(Id='$PackageId',Version='$LatestVersion')"
+        $SpecificResult = Invoke-RestMethod $SpecificUrl
+
+        if ($SpecificResult.entry.properties.PackageStatus -ne 'Approved') {
+            Write-Host "$PackageId $LatestVersion is pending approval → skipping update."
+            return $false
+        }
+    } catch {
+        # Not found → OK to continue
+    }
+
+    return $true
+}
+
+# ------------------------------------------------------------
+# Step 1 — Get Latest Version and URLs via Selenium
+# ------------------------------------------------------------
+function global:au_GetLatest {
+    Write-Host "Starting Selenium to extract latest FileZilla URLs..."
+
+    $Driver = Start-SeDriver `
+        -Browser "firefox" `
+        -State Headless `
+        -StartURL $ReleasePage `
+        -DefaultDownloadPath $ToolsDir
+
+    $Elem32 = Get-SeElement -By PartialLinkText "_win32-setup.exe"
+    $Elem64 = Get-SeElement -By PartialLinkText "_win64-setup.exe"
+
+    $URL32 = $Elem32.GetAttribute("href")
+    $URL64 = $Elem64.GetAttribute("href")
+
+    # Parse version from URL
+    $Version = ([uri]$URL32).Segments[-1].Split('_')[-2]
+
+    if (-not ($Version -as [version])) {
+        throw "Could not parse version from download URL: $URL32"
+    }
+
+    Write-Host "Found latest version: $Version"
+
+    $Driver.Quit()
+    $Driver.Dispose()
+
+    return @{
+        Version  = $Version
+        FileType = "exe"
+    }
+}
+
+# ------------------------------------------------------------
+# Step 2 — Download the installers via Selenium
+# Also performs version check here
+# ------------------------------------------------------------
+function global:au_BeforeUpdate {
+    # Skip update if version exists or pending approval
+    if (-not (Test-UpdateNeeded $Latest.Version)) {
+        Write-Host "Update skipped."
+        return
+    }
+
+    Write-Host "Downloading FileZilla installers using Selenium..."
+
+    # Clean old files
+    Remove-Item "$ToolsDir\FileZilla_3*.exe" -Force -ErrorAction SilentlyContinue
+
+    $Driver = Start-SeDriver `
+        -Browser "firefox" `
+        -State Headless `
+        -StartURL $ReleasePage `
+        -DefaultDownloadPath $ToolsDir
+
+    # Trigger real downloads (JS click)
+    (Get-SeElement -By PartialLinkText "_win32-setup.exe").Click()
+    (Get-SeElement -By PartialLinkText "_win64-setup.exe").Click()
+
+    Start-Sleep -Seconds 8   # Allow time for downloads
+
+    $Driver.Quit()
+    $Driver.Dispose()
+
+    # Rename files to AU naming convention
+    $v = $Latest.Version
+
+    Get-ChildItem $ToolsDir -Filter "*win32-setup*.exe" |
+        Rename-Item -NewName "FileZilla_${v}_win32-setup.exe"
+
+    Get-ChildItem $ToolsDir -Filter "*win64-setup*.exe" |
+        Rename-Item -NewName "FileZilla_${v}_win64-setup.exe"
+
+    Write-Host "Downloads complete."
+}
+
+# ------------------------------------------------------------
+# Step 3 — Update scripts and verification file
+# ------------------------------------------------------------
 function global:au_SearchReplace {
-   @{
+    @{
         ".\tools\chocolateyInstall.ps1" = @{
-            "(?i)(^\s*packageName\s*=\s*)('.*')"  = "`$1'$($Latest.PackageName)'"
+            "(?i)(^\s*packageName\s*=\s*)('.*')" = "`$1'$($Latest.PackageName)'"
         }
 
         ".\legal\VERIFICATION.txt" = @{
-          "(?i)(\s+x32:).*"            = "`${1} $($releases)"
-          "(?i)(\s+x64:).*"            = "`${1} $($releases)"
-          "(?i)(checksum32:).*"        = "`${1} $($Latest.Checksum32)"
-          "(?i)(checksum64:).*"        = "`${1} $($Latest.Checksum64)"
+            "(?i)(\s+x32:).*"     = "`${1} $($Latest.URL32)"
+            "(?i)(\s+x64:).*"     = "`${1} $($Latest.URL64)"
+            "(?i)(checksum32:).*" = "`${1} $($Latest.Checksum32)"
+            "(?i)(checksum64:).*" = "`${1} $($Latest.Checksum64)"
         }
     }
 }
 
-function global:au_BeforeUpdate { Get-RemoteFiles -Purge -FileNameBase "FileZilla_$($Latest.Version)"}
-
-function global:au_GetLatest {
-    $download_page = Invoke-WebRequest -Uri $releases -UseBasicParsing -UserAgent "Chocolatey" -Headers @{
-        "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-    }
-    $url32 = $download_page.Links | Where-Object href -match "win32\-setup\.exe" | Select-Object -first 1 -expand href
-    $url64 = $download_page.Links | Where-Object href -match "win64\-setup\.exe" | Select-Object -first 1 -expand href
-    $version = $url32 -split '_' | Where-Object { $_ -match '^\d+\.[\d\.]+$' } | Select-Object -first 1
-
-    @{
-        Version  = $version
-        URL64    = $url64
-        URL32    = $url32
-        FileType = "exe"
-        Options = @{
-            Headers = @{
-                "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-                "User-Agent" = "Chocolatey"
-            }
-        }
-    }
-}
-
-update -ChecksumFor none
+# ------------------------------------------------------------
+# Step 4 — Run AU update
+# ------------------------------------------------------------
+update -ChecksumFor none -NoCheckUrl
