@@ -27,6 +27,12 @@ jobs:
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
+      
+      - name: Install pwsh
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          choco install pwsh -y
 
       - name: Configure API key
         shell: powershell
