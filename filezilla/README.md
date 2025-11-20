@@ -1,5 +1,6 @@
-# <img src="https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@938aeca0853717399b72289f38b9dddad0417640/icons/filezilla.svg" width="48" height="48"/> [filezilla](https://chocolatey.org/packages/filezilla)
+# <img src="https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages@master/filezilla/filezilla.svg" width="48" height="48"/> [filezilla](https://chocolatey.org/packages/filezilla)
 
+[![](https://img.shields.io/chocolatey/v/filezilla?color=green&label=filezilla)](https://chocolatey.org/packages/filezilla) [![](https://img.shields.io/chocolatey/dt/filezilla)](https://chocolatey.org/packages/filezilla)
 
 FileZilla Client is a fast and reliable cross-platform FTP, FTPS and SFTP client with lots of useful features and an intuitive graphical user interface.
 
@@ -26,8 +27,8 @@ FileZilla Client is a fast and reliable cross-platform FTP, FTPS and SFTP client
 - Synchronized directory browsing
 - Remote file search
 
-![screenshot](https://cdn.rawgit.com/chocolatey/chocolatey-coreteampackages/master/automatic/filezilla/screenshot.png)
+![screenshot](https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages@master/filezilla/screenshot.png)
 
 ## Notes
 
-- **If the package is out of date please check [Version History](#versionhistory) for the latest submitted version. If you have a question, please ask it in [Chocolatey Community Package Discussions](https://github.com/chocolatey-community/chocolatey-packages/discussions) or raise an issue on the [Chocolatey Community Packages Repository](https://github.com/chocolatey-community/chocolatey-packages/issues) if you have problems with the package. Disqus comments will generally not be responded to.**
+- **If the package is out of date please check [Version History](#versionhistory) for the latest submitted version. If this package isn't up-to-date for some days, [Create an issue](https://github.com/arrrghhh/ChocolateyPackages/issues/new/choose). Disqus comments will generally not be responded to.**

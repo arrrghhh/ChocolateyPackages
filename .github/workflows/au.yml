@@ -27,19 +27,28 @@ jobs:
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
-
+      
       - name: Configure API key
         shell: powershell
         run: |
           choco apiKey add -s https://push.chocolatey.org/ `
             -k $env:CHOCO_API_KEY
 
-      - name: Run vnc-viewer update.ps1
-        shell: powershell
+      # - name: Run vnc-viewer update.ps1
+      #   shell: powershell
+      #   run: |
+      #     Set-ExecutionPolicy Bypass -Scope Process -Force
+      #     $env:au_whatif = 'true'
+      #     Push-Location ./vnc-viewer
+      #     ./update.ps1
+      #     Pop-Location
+      
+      - name: Run filezilla update.ps1
+        shell: pwsh
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $env:au_whatif = 'true'
-          Push-Location ./vnc-viewer
+          Push-Location ./filezilla
           ./update.ps1
           Pop-Location
 

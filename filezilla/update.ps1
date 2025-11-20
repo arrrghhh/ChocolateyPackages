@@ -1,6 +1,6 @@
-# ==============================
-#   update.ps1 — FileZilla AU
-# ==============================
+﻿$PackageId   = "filezilla"
+$ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
+$ToolsDir    = "$PSScriptRoot\tools"
 
 function Ensure-Module {
     param(
@@ -37,16 +37,12 @@ function Ensure-Module {
     throw "FATAL: Module '$Name' is missing and could not be installed."
 }
 
-Ensure-Module -Name 'Chocolatey-AU'
+#Ensure-Module -Name 'Chocolatey-AU' # Shouldn't be needed to import this module when using GH Actions as it's already loaded...
 Ensure-Module -Name 'Selenium'
 
-$PackageId   = "filezilla"
-$ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
-$ToolsDir    = "$PSScriptRoot\tools"
-
-# ------------------------------------------------------------
-# Step 0 — Helper: Check if update is needed
-# ------------------------------------------------------------
+if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
+	& ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
+}
 
 function Test-UpdateNeeded {
     param($LatestVersion)
@@ -81,23 +77,61 @@ function Test-UpdateNeeded {
     return $true
 }
 
-# ------------------------------------------------------------
-# Step 1 — Get Latest Version and URLs via Selenium
-# ------------------------------------------------------------
+function Get-FileZillaSHA512 {
+    param(
+        [Parameter(Mandatory)]
+        [string] $Architecture  # "win32" or "win64"
+    )
+
+    $targetFile = "_${Architecture}-setup.exe"
+    
+    #Write-Host "Extracting SHA-512 for: $targetFile"
+    
+    # Find and click the info button for this architecture
+    $infoButton = $driver.FindElement([OpenQA.Selenium.By]::XPath("//text()[contains(., '$targetFile')]/ancestor::*/following::img[@alt='Show file details'][1]"))
+    $infoButton.Click()
+    
+    # Wait for details to appear
+    [System.Threading.Thread]::Sleep(500)
+    
+    # Find the details div and extract SHA-512
+    try {
+        $sha512Element = $driver.FindElement([OpenQA.Selenium.By]::XPath("//div[@class='details']//p[contains(text(), 'SHA-512')]"))
+    } catch {
+        #Write-Host "XPath search failed, trying alternative method..."
+        $allParagraphs = $driver.FindElements([OpenQA.Selenium.By]::XPath("//div[@class='details']//p"))
+        
+        $sha512Element = $null
+        foreach ($para in $allParagraphs) {
+            if ($para.Text -match "SHA-512") {
+                $sha512Element = $para
+                break
+            }
+        }
+        
+        if ($null -eq $sha512Element) {
+            throw "Could not find SHA-512 hash for $targetFile"
+        }
+    }
+    
+    # Clean and extract hash
+    $fullText = $sha512Element.Text
+    $cleanText = $fullText -replace "\s+", " "
+    
+    if ($cleanText -match "SHA-512 hash:\s*([a-f0-9]{128})") {
+        $sha512Value = $matches[1]
+        #Write-Host "SHA-512 ($Architecture): $sha512Value"
+        return $sha512Value
+    } else {
+        throw "Could not extract SHA-512 hash from text: $cleanText"
+    }
+}
+
 function global:au_GetLatest {
     Write-Host "Starting Selenium to extract latest FileZilla URLs..."
 
-    $Driver = Start-SeDriver `
-        -Browser "firefox" `
-        -State Headless `
-        -StartURL $ReleasePage `
-        -DefaultDownloadPath $ToolsDir
-
     $Elem32 = Get-SeElement -By PartialLinkText "_win32-setup.exe"
-    $Elem64 = Get-SeElement -By PartialLinkText "_win64-setup.exe"
-
     $URL32 = $Elem32.GetAttribute("href")
-    $URL64 = $Elem64.GetAttribute("href")
 
     # Parse version from URL
     $Version = ([uri]$URL32).Segments[-1].Split('_')[-2]
@@ -108,42 +142,32 @@ function global:au_GetLatest {
 
     Write-Host "Found latest version: $Version"
 
-    $Driver.Quit()
-    $Driver.Dispose()
-
     return @{
         Version  = $Version
         FileType = "exe"
     }
 }
 
-# ------------------------------------------------------------
-# Step 2 — Download the installers via Selenium
-# Also performs version check here
-# ------------------------------------------------------------
 function global:au_BeforeUpdate {
-    <#
-    # Skip update if version exists or pending approval
-    if (-not (Test-UpdateNeeded $Latest.Version)) {
-        Write-Host "Update skipped."
-        return
-    }
-    #>
+
     $Version = $Latest.Version
     Write-Host "Downloading FileZilla installers using Selenium..."
 
     # Clean old files
     Remove-Item "$ToolsDir\FileZilla_3*.exe" -Force -ErrorAction SilentlyContinue
 
-    $Driver = Start-SeDriver `
-        -Browser "firefox" `
-        -State Headless `
-        -StartURL $ReleasePage `
-        -DefaultDownloadPath $ToolsDir
-
+    $targetFile32 = "_win32-setup.exe"
+    $targetFile64 = "_win64-setup.exe"
     # Trigger real downloads (JS click)
-    (Get-SeElement -By PartialLinkText "_win32-setup.exe").Click()
-    (Get-SeElement -By PartialLinkText "_win64-setup.exe").Click()
+    (Get-SeElement -By PartialLinkText $targetFile32).Click()
+    (Get-SeElement -By PartialLinkText $targetFile64).Click()
+
+    $sha512_32 = Get-FileZillaSHA512 -Architecture "win32"
+    Start-Sleep -Milliseconds 500
+    $sha512_64 = Get-FileZillaSHA512 -Architecture "win64"
+
+    #Write-Host "SHA-512_32 Value: $sha512_32"
+    #Write-Host "SHA-512_64 Value: $sha512_64"
 
     # Wait for downloads to finish
     $Local32 = "$ToolsDir\FileZilla_${Version}_win32-setup.exe"
@@ -164,29 +188,41 @@ function global:au_BeforeUpdate {
 
     Write-Host "Both installers are present."
 
-    $Driver.Quit()
-    $Driver.Dispose()
+    # Compare checksums
+    if (((Get-FileHash $Local32 -Algorithm SHA512).Hash) -eq $sha512_32) {
+        Write-Host "32-bit hashes match!"
+    }
+    else {
+        Write-Error "32-bit hash mismatch, exiting..."
+        exit 1
+    }
+    if (((Get-FileHash $Local64 -Algorithm SHA512).Hash) -eq $sha512_64) {
+        Write-Host "64-bit hashes match!"
+    }
+    else {
+        Write-Error "64-bit hash mismatch, exiting..."
+        exit 1
+    }
+    $Latest.Checksum32 = $sha512_32
+    $Latest.Checksum64 = $sha512_64
 }
 
-# ------------------------------------------------------------
-# Step 3 — Update scripts and verification file
-# ------------------------------------------------------------
 function global:au_SearchReplace {
     @{
-        ".\tools\chocolateyInstall.ps1" = @{
-            "(?i)(^\s*packageName\s*=\s*)('.*')" = "`$1'$($Latest.PackageName)'"
-        }
-
         ".\legal\VERIFICATION.txt" = @{
-            "(?i)(\s+x32:).*"     = "`${1} $($Latest.URL32)"
-            "(?i)(\s+x64:).*"     = "`${1} $($Latest.URL64)"
             "(?i)(checksum32:).*" = "`${1} $($Latest.Checksum32)"
             "(?i)(checksum64:).*" = "`${1} $($Latest.Checksum64)"
         }
     }
 }
 
-# ------------------------------------------------------------
-# Step 4 — Run AU update
-# ------------------------------------------------------------
+$Driver = Start-SeDriver `
+    -Browser "firefox" `
+    -State Headless `
+    -StartURL $ReleasePage `
+    -DefaultDownloadPath $ToolsDir
+
 update -ChecksumFor none -NoCheckUrl
+
+$Driver.Quit()
+$Driver.Dispose()
