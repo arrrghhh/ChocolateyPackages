@@ -32,7 +32,7 @@ jobs:
         shell: powershell
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          choco install pwsh -y
+          choco install pwsh -force -y
 
       - name: Configure API key
         shell: powershell
