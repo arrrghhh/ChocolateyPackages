@@ -33,6 +33,13 @@ jobs:
         run: |
           choco install firefox -y
       
+      - name: Test Selenium Module
+        shell: pwsh
+        run: |
+          Import-Module Selenium -Force
+          Get-Module Selenium
+          Get-Command Start-SeDriver
+      
       - name: Configure API key
         shell: powershell
         run: |
