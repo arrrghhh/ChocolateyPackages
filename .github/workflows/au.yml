@@ -28,15 +28,14 @@ jobs:
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
       
-      - name: Install Firefox
-        shell: powershell
-        run: |
-          choco install firefox -y
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v2
       
-      - name: Test Selenium Module
+      - name: Install Selenium Module
         shell: pwsh
         run: |
           & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
+          Start-SeDriver -Browser "chrome" -State Headless
       
       - name: Configure API key
         shell: powershell
