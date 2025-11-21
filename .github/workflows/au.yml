@@ -28,16 +28,16 @@ jobs:
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
       
-      - name: Install Firefox
-        shell: powershell
-        run: |
-          choco install firefox -y
+      # - name: Install Firefox
+      #   shell: powershell
+      #   run: |
+      #     choco install firefox -y
       
       - name: Test Selenium Module
         shell: pwsh
         run: |
-          Import-Module Selenium -Force
-          Get-Module Selenium
+          & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
+          Get-Module Selenium -ListAvailable
           Get-Command Start-SeDriver
       
       - name: Configure API key
