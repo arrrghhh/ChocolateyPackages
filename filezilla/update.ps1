@@ -181,7 +181,7 @@ function global:au_SearchReplace {
 }
 
 $Driver = Start-SeDriver `
-    -Browser "firefox" `
+    -Browser "chrome" `
     -State Headless `
     -StartURL $ReleasePage `
     -DefaultDownloadPath $ToolsDir
