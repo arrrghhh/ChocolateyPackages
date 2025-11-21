@@ -2,50 +2,11 @@
 $ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
 $ToolsDir    = "$PSScriptRoot\tools"
 
-function Ensure-Module {
-    param(
-        [Parameter(Mandatory)]
-        [string] $Name,
-
-        [string] $MinVersion
-    )
-
-    # Already imported?
-    if (Get-Module -Name $Name -ListAvailable -ErrorAction SilentlyContinue) {
-        try {
-            Import-Module $Name -ErrorAction Stop
-            Write-Host "Module '$Name' imported successfully."
-            return
-        } catch {
-            Write-Warning "Module '$Name' exists but could not be loaded: $_"
-        }
-    }
-
-    Write-Warning "Module '$Name' not found. Attempting installation..."
-
-    # Try PowerShell Gallery install
-    try {
-        Install-Module $Name -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
-        Import-Module $Name -ErrorAction Stop
-        Write-Host "Module '$Name' installed and imported successfully."
-        return
-    }
-    catch {
-        Write-Warning "Could not install module '$Name' from PSGallery: $_"
-    }
-
-    throw "FATAL: Module '$Name' is missing and could not be installed."
-}
-
-#Ensure-Module -Name 'Chocolatey-AU' # Shouldn't be needed to import this module when using GH Actions as it's already loaded...
-#Ensure-Module -Name 'Selenium'
-
 if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
 	& ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
 }
 
 Get-Module Selenium -ListAvailable
-
 
 function Test-UpdateNeeded {
     param($LatestVersion)
