@@ -31,11 +31,6 @@ jobs:
       - name: Install Firefox
         uses: browser-actions/setup-firefox@v1
       
-      - name: Install Selenium Module
-        shell: pwsh
-        run: |
-          & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
-      
       - name: Configure API key
         shell: powershell
         run: |
@@ -54,6 +49,7 @@ jobs:
       - name: Run filezilla update.ps1
         shell: pwsh
         run: |
+          & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
           Import-Module Selenium -Force
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $env:au_whatif = 'true'
