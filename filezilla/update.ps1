@@ -1,11 +1,15 @@
 ﻿$PackageId   = "filezilla"
 $ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
 $ToolsDir    = "$PSScriptRoot\tools"
-
+<#
 if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
 	& ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
 }
 
+
+Install-Module -Name Selenium -RequiredVersion 3.0.1 -Force -Scope CurrentUser -AllowClobber
+Import-Module Selenium -RequiredVersion 3.0.1
+#>
 Get-Module Selenium -ListAvailable
 
 function Test-UpdateNeeded {
@@ -180,12 +184,19 @@ function global:au_SearchReplace {
     }
 }
 
+
 $Driver = Start-SeDriver `
-    -Browser "chrome" `
+    -Browser "firefox" `
     -State Headless `
     -StartURL $ReleasePage `
     -DefaultDownloadPath $ToolsDir
 
+<#
+$Driver = Start-SeFirefox `
+    -Headless `
+    -StartURL $ReleasePage `
+    -DefaultDownloadPath $ToolsDir
+#>
 update -ChecksumFor none -NoCheckUrl
 
 $Driver.Quit()

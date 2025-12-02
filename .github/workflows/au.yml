@@ -28,14 +28,13 @@ jobs:
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
       
-      - name: Install Chrome
-        uses: browser-actions/setup-chrome@v2
+      - name: Install Firefox
+        uses: browser-actions/setup-firefox@v1
       
       - name: Install Selenium Module
         shell: pwsh
         run: |
           & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
-          Start-SeDriver -Browser "chrome" -State Headless
       
       - name: Configure API key
         shell: powershell
@@ -55,6 +54,7 @@ jobs:
       - name: Run filezilla update.ps1
         shell: pwsh
         run: |
+          Import-Module Selenium -Force
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $env:au_whatif = 'true'
           Push-Location ./filezilla
