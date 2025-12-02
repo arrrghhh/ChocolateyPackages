@@ -169,7 +169,6 @@ function global:au_SearchReplace {
     }
 }
 
-
 $Driver = Start-SeDriver `
     -Browser "firefox" `
     -State Headless `
