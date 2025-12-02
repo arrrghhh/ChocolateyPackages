@@ -49,10 +49,11 @@ jobs:
       - name: Run filezilla update.ps1
         shell: pwsh
         run: |
+          # Install latest Selenium module
           & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
+
           Import-Module Selenium -Force
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          $env:au_whatif = 'true'
           Push-Location ./filezilla
           ./update.ps1
           Pop-Location

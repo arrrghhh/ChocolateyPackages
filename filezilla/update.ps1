@@ -1,16 +1,6 @@
 ﻿$PackageId   = "filezilla"
 $ReleasePage = "https://filezilla-project.org/download.php?show_all=1"
 $ToolsDir    = "$PSScriptRoot\tools"
-<#
-if (-not (Get-Module Selenium -ListAvailable | Where-Object Version -ge 4.0.0)) {
-	& ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
-}
-
-
-Install-Module -Name Selenium -RequiredVersion 3.0.1 -Force -Scope CurrentUser -AllowClobber
-Import-Module Selenium -RequiredVersion 3.0.1
-#>
-Get-Module Selenium -ListAvailable
 
 function Test-UpdateNeeded {
     param($LatestVersion)
@@ -66,7 +56,6 @@ function Get-FileZillaSHA512 {
     try {
         $sha512Element = $driver.FindElement([OpenQA.Selenium.By]::XPath("//div[@class='details']//p[contains(text(), 'SHA-512')]"))
     } catch {
-        #Write-Host "XPath search failed, trying alternative method..."
         $allParagraphs = $driver.FindElements([OpenQA.Selenium.By]::XPath("//div[@class='details']//p"))
         
         $sha512Element = $null
@@ -88,7 +77,6 @@ function Get-FileZillaSHA512 {
     
     if ($cleanText -match "SHA-512 hash:\s*([a-f0-9]{128})") {
         $sha512Value = $matches[1]
-        #Write-Host "SHA-512 ($Architecture): $sha512Value"
         return $sha512Value
     } else {
         throw "Could not extract SHA-512 hash from text: $cleanText"
@@ -133,9 +121,6 @@ function global:au_BeforeUpdate {
     $sha512_32 = Get-FileZillaSHA512 -Architecture "win32"
     Start-Sleep -Milliseconds 500
     $sha512_64 = Get-FileZillaSHA512 -Architecture "win64"
-
-    #Write-Host "SHA-512_32 Value: $sha512_32"
-    #Write-Host "SHA-512_64 Value: $sha512_64"
 
     # Wait for downloads to finish
     $Local32 = "$ToolsDir\FileZilla_${Version}_win32-setup.exe"
@@ -191,12 +176,6 @@ $Driver = Start-SeDriver `
     -StartURL $ReleasePage `
     -DefaultDownloadPath $ToolsDir
 
-<#
-$Driver = Start-SeFirefox `
-    -Headless `
-    -StartURL $ReleasePage `
-    -DefaultDownloadPath $ToolsDir
-#>
 update -ChecksumFor none -NoCheckUrl
 
 $Driver.Quit()
