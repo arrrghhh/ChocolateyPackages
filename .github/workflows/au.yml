@@ -37,6 +37,11 @@ jobs:
           choco apiKey add -s https://push.chocolatey.org/ `
             -k $env:CHOCO_API_KEY
 
+      - name: Trust PSGallery
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+
       - name: Run vnc-viewer update.ps1
         shell: pwsh
         run: |
