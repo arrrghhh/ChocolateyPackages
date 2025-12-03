@@ -49,7 +49,7 @@ jobs:
           Install-Module Selenium `
             -Repository PSGallery `
             -AllowPrerelease `
-            -RequiredVersion 4.0.0-preview3
+            -RequiredVersion 4.0.0-preview3 `
             -Force `
             -AllowClobber `
             -Scope CurrentUser
@@ -67,7 +67,7 @@ jobs:
           Install-Module Selenium `
             -Repository PSGallery `
             -AllowPrerelease `
-            -RequiredVersion 4.0.0-preview3
+            -RequiredVersion 4.0.0-preview3 `
             -Force `
             -AllowClobber `
             -Scope CurrentUser
