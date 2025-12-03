@@ -45,9 +45,15 @@ jobs:
       - name: Run vnc-viewer update.ps1
         shell: pwsh
         run: |
-          # Install latest Selenium module
-          & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
-          
+          # Install fixed version of Selenium module
+          Install-Module Selenium `
+            -Repository PSGallery `
+            -AllowPrerelease `
+            -RequiredVersion 4.0.0-preview3
+            -Force `
+            -AllowClobber `
+            -Scope CurrentUser
+
           Import-Module Selenium -Force
           Set-ExecutionPolicy Bypass -Scope Process -Force
           Push-Location ./vnc-viewer
@@ -57,8 +63,14 @@ jobs:
       - name: Run filezilla update.ps1
         shell: pwsh
         run: |
-          # Install latest Selenium module
-          & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast'))) -Specification Selenium! -NoProfileUpdate
+          # Install fixed version of Selenium module
+          Install-Module Selenium `
+            -Repository PSGallery `
+            -AllowPrerelease `
+            -RequiredVersion 4.0.0-preview3
+            -Force `
+            -AllowClobber `
+            -Scope CurrentUser
 
           Import-Module Selenium -Force
           Set-ExecutionPolicy Bypass -Scope Process -Force
