@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 import-module au
 
-$releases = 'https://realvnc.com/en/connect/download/viewer/'
+$ReleasePage = 'https://realvnc.com/en/connect/download/viewer/'
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 function Unzip
@@ -21,16 +21,30 @@ function global:au_SearchReplace {
 }
 
 function global:au_GetLatest {
-	$page = (Invoke-WebRequest -Uri $releases -UseBasicParsing).Content
-	$regex = 'data-file="(https://downloads\.realvnc\.com/download/file/viewer\.files/VNC-Viewer-[^"]+-Windows-msi\.zip)"'
-	if ($page -match $regex) {
-		$url32 = $matches[1]
-	}
+	Write-Host "Getting VNC Viewer MSI URL using Selenium..."
+	Start-Sleep -Seconds 5
+	$Option = Get-SeElement `
+    			-By XPath `
+    			-Value "//option[contains(@data-file,'-Windows-msi.zip')]"
 
-	$version=$(Get-Version $url32).Version
+	$URL32 = $Option.GetAttribute("data-file")
+	
+	# Parse version from URL
+    $Version = ([uri]$URL32).Segments[-1].Split('-')[-3]
+	
+	Write-Host "Found latest version: $Version"
+	Write-Host "Found URL: $URL32"
 
-	$Latest = @{ URL32 = $url32; Version = $version }
+	$Latest = @{ URL32 = $URL32; Version = $Version }
 	return $Latest
 }
 
-update -ChecksumFor 32
+$Driver = Start-SeDriver `
+    -Browser "firefox" `
+    -State Headless `
+    -StartURL $ReleasePage
+
+update -ChecksumFor 32 -NoCheckUrl
+
+$Driver.Quit()
+$Driver.Dispose()
