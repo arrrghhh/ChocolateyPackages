@@ -27,6 +27,7 @@ jobs:
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           choco install au -y
+          "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           #Install-Module -Name au -Force -Scope CurrentUser -AllowClobber
       
       - name: Install Firefox
