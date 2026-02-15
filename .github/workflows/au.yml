@@ -25,9 +25,9 @@ jobs:
       - name: Install AU module
         shell: powershell
         run: |
-          #Set-ExecutionPolicy Bypass -Scope Process -Force
-          #choco install au -y
-          Install-Module -Name au -Force -Scope CurrentUser -AllowClobber
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          choco install au -y
+          #Install-Module -Name au -Force -Scope CurrentUser -AllowClobber
       
       - name: Install Firefox
         uses: browser-actions/setup-firefox@v1
@@ -82,5 +82,6 @@ jobs:
       - name: Push updated package(s)
         shell: powershell
         run: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           import-module au
           au push
