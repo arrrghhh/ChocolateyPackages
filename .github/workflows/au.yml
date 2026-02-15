@@ -25,8 +25,9 @@ jobs:
       - name: Install AU module
         shell: powershell
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          choco install au -y
+          #Set-ExecutionPolicy Bypass -Scope Process -Force
+          #choco install au -y
+          Install-Module -Name au -Force -Scope CurrentUser -AllowClobber
       
       - name: Install Firefox
         uses: browser-actions/setup-firefox@v1
