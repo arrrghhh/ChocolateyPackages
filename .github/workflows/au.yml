@@ -82,4 +82,4 @@ jobs:
         shell: powershell
         run: |
           import-module au
-          #au push
+          au push
