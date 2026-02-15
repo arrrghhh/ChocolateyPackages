@@ -83,6 +83,6 @@ jobs:
       - name: Push updated package(s)
         shell: powershell
         run: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          import-module au
-          au push
+          #$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          #import-module au
+          & "C:\ProgramData\chocolatey\bin\au.exe" push
