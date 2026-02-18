@@ -1,23 +1,28 @@
 name: Chocolatey Automatic Updater
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # Run daily at midnight
   push:
     branches: [ main ]
-  workflow_dispatch: # Allow manual trigger
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update:
     runs-on: windows-latest
     defaults:
       run:
-        shell: pwsh # This sets PowerShell 7 as the default for ALL steps in this job
+        shell: pwsh
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Ensure we use the default token with the write permissions defined above
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -38,15 +43,25 @@ jobs:
           api_key: ${{ secrets.CHOCO_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Show Changes Summary
+        run: |
+          $status = git status --porcelain
+          if ($status) {
+            Write-Host "Changes detected! Reviewing diff below:" -ForegroundColor Cyan
+            git diff --color
+          } else {
+            Write-Host "No changes to review." -ForegroundColor Gray
+          }
+
       - name: Commit and Push Changes
         run: |
           git add .
           $status = git status --porcelain
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
-            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-            git push
-          } else {
+            #git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+            #git push origin main
+            } else {
             Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }
 
@@ -54,7 +69,7 @@ jobs:
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/main") {
             Import-Module au
-            Start-ChocoAU -Push
+            #Start-ChocoAU -Push
           }
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
