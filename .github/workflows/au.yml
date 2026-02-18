@@ -33,7 +33,7 @@ jobs:
       - name: Run Master Update Script
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update.ps1
+          ./update_all.ps1
         env:
           api_key: ${{ secrets.CHOCO_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
