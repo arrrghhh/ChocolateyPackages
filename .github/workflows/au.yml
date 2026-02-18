@@ -10,36 +10,35 @@ on:
 jobs:
   update:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh # This sets PowerShell 7 as the default for ALL steps in this job
     steps:
-      - name: Checkout Code
+      - name: Checkout Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Configure Git
-        shell: powershell
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Chocolatey API Key
-        shell: powershell
         run: |
           if ("${{ secrets.CHOCO_API_KEY }}" -ne "") {
             choco apikey --key ${{ secrets.CHOCO_API_KEY }} --source https://push.chocolatey.org/
           }
-        
+
       - name: Run Master Update Script
-        shell: powershell
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update_all.ps1
+          ./update.ps1
         env:
           api_key: ${{ secrets.CHOCO_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and Push Changes
-        shell: powershell
         run: |
           git add .
           $status = git status --porcelain
@@ -52,7 +51,6 @@ jobs:
           }
 
       - name: Push to Chocolatey
-        shell: powershell
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/main") {
             Import-Module au
