@@ -44,8 +44,8 @@ jobs:
           $status = git status --porcelain
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
-            #git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-            #git push
+            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+            git push
           } else {
             Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }
@@ -54,7 +54,7 @@ jobs:
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/main") {
             Import-Module au
-            #Start-ChocoAU -Push
+            Start-ChocoAU -Push
           }
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
