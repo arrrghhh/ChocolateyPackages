@@ -1,8 +1,8 @@
 # <img src="https://cdn.jsdelivr.net/gh/arrrghhh/ChocolateyPackages@master/filezilla/filezilla.svg" width="48" height="48"/> [filezilla](https://chocolatey.org/packages/filezilla)
 
-[![](https://img.shields.io/chocolatey/v/filezilla?color=green&label=filezilla)](https://chocolatey.org/packages/filezilla) [![](https://img.shields.io/chocolatey/dt/filezilla)](https://chocolatey.org/packages/filezilla)
-
 FileZilla Client is a fast and reliable cross-platform FTP, FTPS and SFTP client with lots of useful features and an intuitive graphical user interface.
+
+[![](https://img.shields.io/chocolatey/v/filezilla?color=green&label=filezilla)](https://chocolatey.org/packages/filezilla) [![](https://img.shields.io/chocolatey/dt/filezilla)](https://chocolatey.org/packages/filezilla)
 
 ## Features
 

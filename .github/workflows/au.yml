@@ -1,88 +1,75 @@
 name: Chocolatey Automatic Updater
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
   schedule:
-    - cron: "0 2 * * *"   # Runs every day at 2am UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update:
     runs-on: windows-latest
-    env:
-      CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
-
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Ensure we use the default token with the write permissions defined above
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Chocolatey
-        shell: powershell
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Chocolatey API Key
+        run: |
+          if ("${{ secrets.CHOCO_API_KEY }}" -ne "") {
+            choco apikey --key ${{ secrets.CHOCO_API_KEY }} --source https://push.chocolatey.org/
+          }
+
+      - name: Run Master Update Script
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          ./update_all.ps1
+        env:
+          api_key: ${{ secrets.CHOCO_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install AU module
-        shell: powershell
+      - name: Show Changes Summary
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          choco install au -y
-          "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          #Install-Module -Name au -Force -Scope CurrentUser -AllowClobber
-      
-      - name: Install Firefox
-        uses: browser-actions/setup-firefox@v1
-      
-      - name: Configure API key
-        shell: powershell
-        run: |
-          choco apiKey add -s https://push.chocolatey.org/ `
-            -k $env:CHOCO_API_KEY
+          $status = git status --porcelain
+          if ($status) {
+            Write-Host "Changes detected! Reviewing diff below:" -ForegroundColor Cyan
+            git diff --color
+          } else {
+            Write-Host "No changes to review." -ForegroundColor Gray
+          }
 
-      - name: Trust PSGallery
-        shell: pwsh
+      - name: Commit and Push Changes
         run: |
-          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          git add .
+          $status = git status --porcelain
+          if ($status) {
+            Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
+            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+            git push origin main
+          } else {
+              Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
+          }
 
-      - name: Run vnc-viewer update.ps1
-        shell: pwsh
+      - name: Push to Chocolatey
         run: |
-          # Install fixed version of Selenium module
-          Install-Module Selenium `
-            -Repository PSGallery `
-            -AllowPrerelease `
-            -RequiredVersion 4.0.0-preview3 `
-            -Force `
-            -AllowClobber `
-            -Scope CurrentUser
-
-          Import-Module Selenium -Force
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          Push-Location ./vnc-viewer
-          ./update.ps1
-          Pop-Location
-      
-      - name: Run filezilla update.ps1
-        shell: pwsh
-        run: |
-          # Install fixed version of Selenium module
-          Install-Module Selenium `
-            -Repository PSGallery `
-            -AllowPrerelease `
-            -RequiredVersion 4.0.0-preview3 `
-            -Force `
-            -AllowClobber `
-            -Scope CurrentUser
-
-          Import-Module Selenium -Force
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          Push-Location ./filezilla
-          ./update.ps1
-          Pop-Location
-
-      - name: Push updated package(s)
-        shell: powershell
-        run: |
-          #$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          #import-module au
-          & "C:\ProgramData\chocolatey\bin\au.exe" push
+          if ("${{ github.ref }}" -eq "refs/heads/main") {
+            Import-Module au
+            Start-ChocoAU -Push
+          }
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
