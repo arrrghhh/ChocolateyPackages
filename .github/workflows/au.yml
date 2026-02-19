@@ -59,8 +59,8 @@ jobs:
           $status = git status --porcelain
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
-            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-            git push origin main
+            #git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+            #git push origin main
           } else {
               Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }
