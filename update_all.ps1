@@ -1,4 +1,7 @@
 # This goes in the ROOT of your repo
+param(
+    [switch]$Push
+)
 $ErrorActionPreference = 'Stop'
 
 # Ensure AU is available
@@ -25,9 +28,10 @@ foreach ($Dir in $PackageDirs) {
             Write-Host "Dot-sourcing local update.ps1..." -ForegroundColor Gray
             # Using dot-sourcing ensures the au_GetLatest functions are available to the 'update' command
             . ./update.ps1
+            if ($Push) { update -Push }
         } else {
             # Standard AU update if no custom script is present
-            update
+            if ($Push) { update -Push } else { update }
         }
     } catch {
         # Fixed: Using ${} to delimit the variable name from the following colon
@@ -38,4 +42,3 @@ foreach ($Dir in $PackageDirs) {
 }
 
 Write-Host "`n--- All updates complete ---" -ForegroundColor Magenta
-Write-Host "To push packages, run: Start-ChocoAU -Push" -ForegroundColor Yellow

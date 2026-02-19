@@ -68,8 +68,7 @@ jobs:
       - name: Push to Chocolatey
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/main") {
-            Import-Module au
-            Start-ChocoAU -Push
+            ./update_all.ps1 -Push
           }
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
