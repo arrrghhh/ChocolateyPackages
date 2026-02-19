@@ -68,7 +68,10 @@ jobs:
       - name: Push to Chocolatey
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/main") {
-            ./update_all.ps1 -Push
+            Get-ChildItem -Recurse -Filter *.nupkg | ForEach-Object {
+              Write-Host "Pushing $($_.Name)..." -ForegroundColor Cyan
+              choco push $_.FullName --source https://push.chocolatey.org/
+            }
           }
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
