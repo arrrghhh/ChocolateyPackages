@@ -171,8 +171,6 @@ function global:au_GetLatest {
     }
 }
 
-}
-
 # --- 4. Main Execution ---
 if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory }
 
