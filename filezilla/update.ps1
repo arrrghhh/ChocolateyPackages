@@ -171,6 +171,11 @@ function global:au_GetLatest {
     }
 }
 
+function global:au_SearchReplace {
+    # No replacements needed - this is an embedded package using bundled EXEs
+    @{}
+}
+
 # --- 4. Main Execution ---
 if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory }
 
