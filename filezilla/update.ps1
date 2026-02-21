@@ -172,8 +172,35 @@ function global:au_GetLatest {
 }
 
 function global:au_SearchReplace {
-    # No replacements needed - this is an embedded package using bundled EXEs
+    # No replacements needed - embedded package using bundled EXEs
     @{}
+}
+
+function global:au_BeforeUpdate {
+    Write-Log "Cleaning old installers from tools\..." -Color Cyan
+    Get-ChildItem "$ToolsDir\*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'geckodriver.exe' } | Remove-Item -Force
+
+    Write-Log "Triggering 64-bit download via browser..." -Color Cyan
+    $Driver.Navigate().GoToUrl($Latest.URL64)
+    Start-Sleep -Seconds 3
+
+    Write-Log "Triggering 32-bit download via browser..." -Color Cyan
+    $Driver.Navigate().GoToUrl($Latest.URL32)
+    Start-Sleep -Seconds 3
+
+    # Wait for both EXEs to finish downloading (no .part files remaining)
+    Write-Log "Waiting for downloads to complete..." -Color Cyan
+    $timeout = 180
+    $elapsed = 0
+    do {
+        Start-Sleep -Seconds 3
+        $elapsed += 3
+        $partFiles = Get-ChildItem "$ToolsDir\*.part" -ErrorAction SilentlyContinue
+        $exeFiles  = Get-ChildItem "$ToolsDir\*.exe"  -ErrorAction SilentlyContinue
+        if ($elapsed -ge $timeout) { throw "Timed out waiting for downloads after ${timeout}s" }
+    } while ($partFiles -or $exeFiles.Count -lt 2)
+
+    Write-Log "Downloads complete: $($exeFiles.Name -join ', ')" -Color Green
 }
 
 # --- 4. Main Execution ---
@@ -184,11 +211,19 @@ $FirefoxOptions = New-Object OpenQA.Selenium.Firefox.FirefoxOptions
 $FirefoxOptions.AddArgument("--headless")
 $FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::None
 
+# Configure Firefox to auto-download EXEs to tools\ without prompting
+$FirefoxOptions.SetPreference("browser.download.folderList", 2)
+$FirefoxOptions.SetPreference("browser.download.dir", $ToolsDir)
+$FirefoxOptions.SetPreference("browser.download.useDownloadDir", $true)
+$FirefoxOptions.SetPreference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream,application/x-msdownload,application/x-msdos-program,application/exe,application/x-exe")
+$FirefoxOptions.SetPreference("browser.download.manager.showWhenStarting", $false)
+$FirefoxOptions.SetPreference("browser.download.improvements_to_download_panel", $false)
+
 $Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
 $Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 try {
-    update -ChecksumFor none -NoCheckUrl
+    update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion
 } finally {
     if ($null -ne $Driver) {
         Write-Log "Closing browser session..."
