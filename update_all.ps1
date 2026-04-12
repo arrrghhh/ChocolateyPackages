@@ -24,15 +24,8 @@ foreach ($Dir in $PackageDirs) {
     Push-Location $Dir
     try {
         # Check if a local update.ps1 exists; if so, dot-source it so functions are in scope
-        if (Test-Path "update.ps1") {
-            Write-Host "Dot-sourcing local update.ps1..." -ForegroundColor Gray
-            # Using dot-sourcing ensures the au_GetLatest functions are available to the 'update' command
-            . ./update.ps1
-            if ($Push) { update -Push }
-        } else {
-            # Standard AU update if no custom script is present
-            if ($Push) { update -Push } else { update }
-        }
+        if (Test-Path "update.ps1") { . ./update.ps1 }
+        if ($Push) { update -Push } else { update }
     } catch {
         # Fixed: Using ${} to delimit the variable name from the following colon
         Write-Host "Failed to update ${PackageName}: $($_.Exception.Message)" -ForegroundColor Red
