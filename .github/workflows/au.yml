@@ -54,6 +54,7 @@ jobs:
           }
 
       - name: Commit and Push Changes
+        id: commit
         run: |
           git add .
           $status = git status --porcelain
@@ -61,17 +62,19 @@ jobs:
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
             git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
             git push origin main
+            echo "has_changes=true" >> $env:GITHUB_OUTPUT
           } else {
               Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
+              echo "has_changes=false" >> $env:GITHUB_OUTPUT
           }
 
       - name: Push to Chocolatey
+        if: steps.commit.outputs.has_changes == 'true'
         run: |
-          if ("${{ github.ref }}" -eq "refs/heads/main") {
-            Get-ChildItem -Recurse -Filter *.nupkg | ForEach-Object {
-              Write-Host "Pushing $($_.Name)..." -ForegroundColor Cyan
-              choco push $_.FullName --source https://push.chocolatey.org/
-            }
+          $changedFiles = git diff-tree --no-commit-id -r --name-only HEAD
+          $changedFiles | Where-Object { $_ -like "*.nupkg" } | ForEach-Object {
+            Write-Host "Pushing $_..." -ForegroundColor Cyan
+            choco push $_ --source https://push.chocolatey.org/
           }
         env:
           CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
