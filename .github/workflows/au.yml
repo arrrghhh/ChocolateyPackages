@@ -16,12 +16,15 @@ jobs:
     defaults:
       run:
         shell: pwsh
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+      github_token: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Ensure we use the default token with the write permissions defined above
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -29,19 +32,19 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Install PowerShell Modules
+        run: Install-Module au -Force -Scope CurrentUser -AllowClobber
+
       - name: Setup Chocolatey API Key
         run: |
-          if ("${{ secrets.CHOCO_API_KEY }}" -ne "") {
-            choco apikey --key ${{ secrets.CHOCO_API_KEY }} --source https://push.chocolatey.org/
+          if ($env:CHOCO_API_KEY -ne "") {
+            choco apikey --key $env:CHOCO_API_KEY --source https://push.chocolatey.org/
           }
 
       - name: Run Master Update Script
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update_all.ps1
-        env:
-          api_key: ${{ secrets.CHOCO_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          ./update_all.ps1 -Push
 
       - name: Show Changes Summary
         run: |
@@ -54,27 +57,13 @@ jobs:
           }
 
       - name: Commit and Push Changes
-        id: commit
         run: |
           git add .
           $status = git status --porcelain
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
-            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+            git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm') [skip ci]"
             git push origin main
-            echo "has_changes=true" >> $env:GITHUB_OUTPUT
           } else {
-              Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
-              echo "has_changes=false" >> $env:GITHUB_OUTPUT
+            Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }
-
-      - name: Push to Chocolatey
-        if: steps.commit.outputs.has_changes == 'true'
-        run: |
-          $changedFiles = git diff-tree --no-commit-id -r --name-only HEAD
-          $changedFiles | Where-Object { $_ -like "*.nupkg" } | ForEach-Object {
-            Write-Host "Pushing $_..." -ForegroundColor Cyan
-            choco push $_ --source https://push.chocolatey.org/
-          }
-        env:
-          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
