@@ -1,0 +1,12 @@
+# Chocolatey package artifacts — built and pushed to the community repo by AU,
+# should never be committed to the git repository.
+*.nupkg
+
+# Embedded installer binaries (filezilla and any future embedded packages).
+# These are downloaded at update time, bundled into the .nupkg, and pushed
+# to Chocolatey. They don't belong in source control.
+**/tools/*.exe
+
+# Selenium/geckodriver if auto-downloaded into a package's tools\ folder
+**/tools/geckodriver.exe
+**/tools/gecko.zip

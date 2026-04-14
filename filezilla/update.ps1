@@ -1,113 +1,53 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([switch]$Push)
 
-# --- 1. Dynamic Module Loading ---
-try {
-    & ([scriptblock]::Create((Invoke-WebRequest 'bit.ly/modulefast' -UseBasicParsing))) -Specification 'au', 'Selenium!' -NoProfileUpdate
-    Import-Module Selenium -Force
-} catch {
-    Write-Warning "Dynamic module loading failed: $($_.Exception.Message)"
-    if (-not (Get-Module -ListAvailable au) -or -not (Get-Module -ListAvailable Selenium)) {
-        throw "Required modules (au or Selenium) are missing."
-    }
-    Import-Module au
-    Import-Module Selenium
+$ErrorActionPreference = 'Stop'
+
+# Import shared helpers (Write-Log, Get-GeckoDriver, Test-UpdateNeeded)
+Import-Module "$PSScriptRoot\..\helpers.psm1" -Force
+
+# --- 1. Module Loading ---
+if (-not (Get-Module -ListAvailable Selenium)) {
+    Install-Module Selenium -Force -Scope CurrentUser -AllowClobber
 }
+Import-Module Selenium -Force
 
 # --- 2. Configuration ---
 $PackageId   = "filezilla"
 $ReleasePage = 'https://filezilla-project.org/download.php?show_all=1'
 $ToolsDir    = "$PSScriptRoot\tools"
-$MaxAttempts = 3 
-
-# --- Driver Path Logic ---
-function Get-GeckoDriver {
-    $FoundCmd = Get-Command geckodriver.exe -ErrorAction SilentlyContinue
-    $PossiblePaths = @(
-        "C:\webdrivers",
-        "C:\ProgramData\chocolatey\bin",
-        "C:\ProgramData\chocolatey\lib\selenium-gecko-driver\tools",
-        $PSScriptRoot,
-        "$PSScriptRoot\tools"
-    )
-
-    if ($null -ne $FoundCmd) { $PossiblePaths += Split-Path $FoundCmd.Path }
-
-    foreach ($path in $PossiblePaths) {
-        if ($null -ne $path -and (Test-Path "$path\geckodriver.exe")) {
-            return $path
-        }
-    }
-
-    Write-Host "geckodriver.exe not found. Attempting automatic download..." -ForegroundColor Cyan
-    $dest = Join-Path $PSScriptRoot "tools"
-    if (-not (Test-Path $dest)) { New-Item $dest -ItemType Directory | Out-Null }
-    
-    $ghApi = "https://api.github.com/repos/mozilla/geckodriver/releases/latest"
-    $release = Invoke-RestMethod $ghApi -UseBasicParsing
-    $asset = $release.assets | Where-Object { $_.name -match 'win64' -and $_.name -match 'zip' } | Select-Object -First 1
-    
-    $zipPath = Join-Path $dest "gecko.zip"
-    Invoke-WebRequest $asset.browser_download_url -OutFile $zipPath -UseBasicParsing
-    Expand-Archive -Path $zipPath -DestinationPath $dest -Force
-    Remove-Item $zipPath -Force
-    
-    return $dest
-}
+$MaxAttempts = 3
 
 $GeckoDriverDirectory = Get-GeckoDriver
 
 # --- 3. Helper Functions ---
 
-function Write-Log {
-    param([string]$Message, [string]$Color = "White")
-    $Timestamp = Get-Date -Format "HH:mm:ss"
-    Write-Host "[$Timestamp] $Message" -ForegroundColor $Color
-}
-
 function Start-Backoff {
     param([int]$Attempt)
-    $waitSec = [Math]::Pow(2, $Attempt)
-    Write-Log "Backing off for ${waitSec} seconds (Network Retry)..." -Color Yellow
-    Start-Sleep -Seconds $waitSec
-}
-
-function Test-UpdateNeeded {
-    param($RemoteVersion)
-    # Get local version from nuspec
-    $Nuspec = Get-ChildItem "$PSScriptRoot\*.nuspec" | Select-Object -First 1
-    if (-not $Nuspec) { return $true }
-    
-    [xml]$xml = Get-Content $Nuspec.FullName
-    $LocalVersion = $xml.package.metadata.version
-    
-    if ($LocalVersion -eq $RemoteVersion) {
-        Write-Log "Local version ($LocalVersion) matches remote ($RemoteVersion). No update needed." -Color Gray
-        return $false
-    }
-    return $true
+    $WaitSec = [Math]::Pow(2, $Attempt)
+    Write-Log "Backing off for ${WaitSec}s before retry..." -Color Yellow
+    Start-Sleep -Seconds $WaitSec
 }
 
 function Get-FileZillaSHA512 {
     param([string]$FullFileName)
-    
+
     if ([string]::IsNullOrWhiteSpace($FullFileName)) {
-        throw "Get-FileZillaSHA512: Received an empty filename. Cannot generate details URL."
+        throw "Get-FileZillaSHA512: Received an empty filename."
     }
 
     $DetailsUrl = "https://filezilla-project.org/download.php?details=$FullFileName"
-    
+
     for ($i = 1; $i -le $MaxAttempts; $i++) {
         try {
-            Write-Log "Attempt ${i}: Navigating to hash page for $FullFileName" -Color Cyan
-            $Driver.Navigate().GoToUrl($DetailsUrl)
-            
-            $PageSource = $Driver.PageSource
-            if ($PageSource -match "([a-f0-9]{128})") {
-                $hash = $matches[1]
-                Write-Log "Successfully extracted hash: $hash" -Color Green
-                return $hash
+            Write-Log "Attempt ${i}: Fetching hash page for $FullFileName" -Color Cyan
+            $global:Driver.Navigate().GoToUrl($DetailsUrl)
+
+            if ($global:Driver.PageSource -match "([a-f0-9]{128})") {
+                $Hash = $matches[1]
+                Write-Log "Hash extracted: $Hash" -Color Green
+                return $Hash
             }
-            
+
             throw "SHA-512 hash not found in page source of $DetailsUrl"
         } catch {
             Write-Log "Attempt ${i} failed: $($_.Exception.Message)" -Color Red
@@ -117,117 +57,136 @@ function Get-FileZillaSHA512 {
     }
 }
 
+# --- 4. AU Functions ---
+
 function global:au_GetLatest {
     Write-Log "Navigating to: $ReleasePage"
-    $Driver.Navigate().GoToUrl($ReleasePage)
-    
+    $global:Driver.Navigate().GoToUrl($ReleasePage)
+
     $link64 = $null
     $link32 = $null
     $file64 = $null
     $file32 = $null
 
     try {
-        $el64 = $Driver.FindElement([OpenQA.Selenium.By]::XPath("//a[contains(@href, 'win64-setup.exe') and not(contains(@href, 'patched'))]"))
+        $el64   = $global:Driver.FindElement([OpenQA.Selenium.By]::XPath("//a[contains(@href, 'win64-setup.exe') and not(contains(@href, 'patched'))]"))
         $link64 = $el64.GetAttribute("href")
-        
-        if ($link64 -match "/([^/?]+)(?:\?|$)") { 
-            $file64 = $matches[1] 
-            Write-Log "Detected 64-bit filename: $file64"
+        if ($link64 -match "/([^/?]+)(?:\?|$)") {
+            $file64 = $matches[1]
+            Write-Log "64-bit filename: $file64"
         }
 
-        $el32 = $Driver.FindElement([OpenQA.Selenium.By]::XPath("//a[contains(@href, 'win32-setup.exe')]"))
+        $el32   = $global:Driver.FindElement([OpenQA.Selenium.By]::XPath("//a[contains(@href, 'win32-setup.exe')]"))
         $link32 = $el32.GetAttribute("href")
-        if ($link32 -match "/([^/?]+)(?:\?|$)") { 
-            $file32 = $matches[1] 
-            Write-Log "Detected 32-bit filename: $file32"
+        if ($link32 -match "/([^/?]+)(?:\?|$)") {
+            $file32 = $matches[1]
+            Write-Log "32-bit filename: $file32"
         }
     } catch {
-        throw "Critical Failure: Could not locate download links on the main page."
+        throw "Critical Failure: Could not locate download links. The page structure may have changed."
     }
 
     $version = (Get-Version $link64).Version
-    Write-Log "Remote Version Detected: $version" -Color Cyan
-    
-    # SHORT-CIRCUIT: Check local version vs remote before doing intensive scraping
-    if (-not (Test-UpdateNeeded -RemoteVersion $version)) {
-         return @{ Version = $version; URL64 = $link64; URL32 = $link32 }
+    Write-Log "Remote version: $version" -Color Cyan
+
+    # Short-circuit: skip expensive hash scraping if version hasn't changed
+    if (-not (Test-UpdateNeeded -RemoteVersion $version -PackageDir $PSScriptRoot)) {
+        return @{ Version = $version; URL64 = $link64; URL32 = $link32 }
     }
 
-    # Extract hashes only if update is actually needed
     $hash64 = Get-FileZillaSHA512 -FullFileName $file64
     $hash32 = Get-FileZillaSHA512 -FullFileName $file32
 
-    Write-Log "--- Scrape Results Summary ---" -Color Magenta
-    Write-Log "Version: $version"
-    Write-Log "64-bit URL: $link64"
-    Write-Log "32-bit URL: $link32"
-    Write-Log "------------------------------"
+    Write-Log "64-bit URL : $link64" -Color Magenta
+    Write-Log "32-bit URL : $link32" -Color Magenta
 
-    return @{ 
-        URL64 = $link64; URL32 = $link32; Version = $version; 
-        Checksum64 = $hash64;
-        Checksum32 = $hash32;
+    return @{
+        URL64          = $link64;  URL32          = $link32
+        Version        = $version
+        Checksum64     = $hash64;  Checksum32     = $hash32
         ChecksumType64 = 'sha512'; ChecksumType32 = 'sha512'
+        FileType       = 'exe'
     }
 }
 
 function global:au_SearchReplace {
-    # No replacements needed - embedded package using bundled EXEs
-    @{}
+    @{
+        'legal/VERIFICATION.txt' = @{
+            '(?i)(Version:\s*)[\d.]+'                         = "`${1}$($Latest.Version)"
+            '(?i)(checksum64:\s*)[a-f0-9]{128}'              = "`${1}$($Latest.Checksum64)"
+            '(?i)(checksum32:\s*)[a-f0-9]{128}'              = "`${1}$($Latest.Checksum32)"
+        }
+    }
 }
 
 function global:au_BeforeUpdate {
     Write-Log "Cleaning old installers from tools\..." -Color Cyan
-    Get-ChildItem "$ToolsDir\*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'geckodriver.exe' } | Remove-Item -Force
+    Get-ChildItem "$ToolsDir\*.exe" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne 'geckodriver.exe' } |
+        Remove-Item -Force
 
-    Write-Log "Triggering 64-bit download via browser..." -Color Cyan
-    $Driver.Navigate().GoToUrl($Latest.URL64)
-    Start-Sleep -Seconds 3
+    # Navigate to the release page first so the browser has a valid page context,
+    # then trigger downloads via JS. Using GoToUrl() directly on a CDN file URL
+    # blocks the driver indefinitely waiting for a page load that never arrives.
+    Write-Log "Navigating to release page for download context..." -Color Cyan
+    $global:Driver.Navigate().GoToUrl($ReleasePage)
 
-    Write-Log "Triggering 32-bit download via browser..." -Color Cyan
-    $Driver.Navigate().GoToUrl($Latest.URL32)
-    Start-Sleep -Seconds 3
+    Write-Log "Triggering 64-bit download via JS..." -Color Cyan
+    $global:Driver.ExecuteScript("window.location.href = arguments[0]", $Latest.URL64)
+    Start-Sleep -Seconds 5
 
-    # Wait for both EXEs to finish downloading (no .part files remaining)
-    Write-Log "Waiting for downloads to complete..." -Color Cyan
-    $timeout = 180
-    $elapsed = 0
+    Write-Log "Triggering 32-bit download via JS..." -Color Cyan
+    $global:Driver.ExecuteScript("window.location.href = arguments[0]", $Latest.URL32)
+    Start-Sleep -Seconds 5
+
+    # Wait for both named EXEs to appear with no in-progress .part files
+    $Timeout = 180
+    $Elapsed = 0
+    $Ver     = $Latest.Version
+
+    Write-Log "Waiting for downloads to complete (timeout: ${Timeout}s)..." -Color Cyan
     do {
         Start-Sleep -Seconds 3
-        $elapsed += 3
-        $partFiles = Get-ChildItem "$ToolsDir\*.part" -ErrorAction SilentlyContinue
-        $exeFiles  = Get-ChildItem "$ToolsDir\*.exe"  -ErrorAction SilentlyContinue
-        if ($elapsed -ge $timeout) { throw "Timed out waiting for downloads after ${timeout}s" }
-    } while ($partFiles -or $exeFiles.Count -lt 2)
+        $Elapsed  += 3
+        $PartFiles = Get-ChildItem "$ToolsDir\*.part" -ErrorAction SilentlyContinue
+        $Done64    = Get-ChildItem "$ToolsDir\FileZilla_${Ver}_win64-setup.exe" -ErrorAction SilentlyContinue
+        $Done32    = Get-ChildItem "$ToolsDir\FileZilla_${Ver}_win32-setup.exe" -ErrorAction SilentlyContinue
 
-    Write-Log "Downloads complete: $($exeFiles.Name -join ', ')" -Color Green
+        if ($Elapsed -ge $Timeout) {
+            throw "Timed out after ${Timeout}s waiting for downloads. " +
+                  "64-bit: $($null -ne $Done64), 32-bit: $($null -ne $Done32)"
+        }
+    } while ($PartFiles -or -not $Done64 -or -not $Done32)
+
+    Write-Log "Downloads complete: $($Done64.Name), $($Done32.Name)" -Color Green
 }
 
-# --- 4. Main Execution ---
-if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory }
+# --- 5. Main Execution ---
+if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory | Out-Null }
 
-Write-Log "Initializing Firefox via .NET..."
+Write-Log "Initializing Firefox (headless)..."
 $FirefoxOptions = New-Object OpenQA.Selenium.Firefox.FirefoxOptions
 $FirefoxOptions.AddArgument("--headless")
-$FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::None
+$FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
 
 # Configure Firefox to auto-download EXEs to tools\ without prompting
-$FirefoxOptions.SetPreference("browser.download.folderList", 2)
-$FirefoxOptions.SetPreference("browser.download.dir", $ToolsDir)
-$FirefoxOptions.SetPreference("browser.download.useDownloadDir", $true)
-$FirefoxOptions.SetPreference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream,application/x-msdownload,application/x-msdos-program,application/exe,application/x-exe")
-$FirefoxOptions.SetPreference("browser.download.manager.showWhenStarting", $false)
+$FirefoxOptions.SetPreference("browser.download.folderList",                    2)
+$FirefoxOptions.SetPreference("browser.download.dir",                           $ToolsDir)
+$FirefoxOptions.SetPreference("browser.download.useDownloadDir",                $true)
+$FirefoxOptions.SetPreference("browser.helperApps.neverAsk.saveToDisk",        "application/octet-stream,application/x-msdownload,application/x-msdos-program,application/exe,application/x-exe")
+$FirefoxOptions.SetPreference("browser.download.manager.showWhenStarting",     $false)
 $FirefoxOptions.SetPreference("browser.download.improvements_to_download_panel", $false)
 
-$Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
-$Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
+$global:Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
+$global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 try {
-    update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion
+    if ($Push) { update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion -Push } `
+    else       { update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion }
 } finally {
-    if ($null -ne $Driver) {
+    if ($null -ne $global:Driver) {
         Write-Log "Closing browser session..."
-        $Driver.Quit()
-        $Driver.Dispose()
+        $global:Driver.Quit()
+        $global:Driver.Dispose()
     }
 }
