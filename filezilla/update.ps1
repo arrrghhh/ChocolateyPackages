@@ -179,8 +179,8 @@ $global:Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDi
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 try {
-    $global:au_Push = $Push
-    update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion
+    $result = update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion
+    if ($Push -and $result.Updated) { Push-Package }
 } finally {
     if ($null -ne $global:Driver) {
         Write-Log "Closing browser session..."
