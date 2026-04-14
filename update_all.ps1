@@ -22,7 +22,7 @@ foreach ($Dir in $PackageDirs) {
     try {
         if (Test-Path "update.ps1") {
             Write-Log "Dot-sourcing local update.ps1..." -Color Gray
-            if ($Push) { . ./update.ps1 -Push } else { . ./update.ps1 }
+            . ./update.ps1
         } else {
             if ($Push) { update -Push } else { update }
         }

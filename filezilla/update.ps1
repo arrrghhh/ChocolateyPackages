@@ -1,6 +1,4 @@
-﻿param([switch]$Push)
-
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 # Import shared helpers (Write-Log, Get-GeckoDriver, Test-UpdateNeeded)
 Import-Module "$PSScriptRoot\..\helpers.psm1" -Force

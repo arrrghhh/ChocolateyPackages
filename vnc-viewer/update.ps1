@@ -1,5 +1,3 @@
-param([switch]$Push)
-
 $ErrorActionPreference = 'Stop'
 
 # Import shared helpers (Write-Log, Get-GeckoDriver, Test-UpdateNeeded)
