@@ -16,9 +16,9 @@ Package can be verified like this:
    - Use powershell function 'Get-FileHash -Algorithm SHA512'
    - Use Chocolatey utility 'checksum.exe -t sha512'
 
-   Version: 3.70.2
-   checksum32: 9585c834f2de2341cf01f55002c38356a56207f53fd06f9d86e2ffcbc9de8bc0de52a63af092527458022b42e6e733c33378f3121615eb447148a8aaf9a8e892
-   checksum64: 6a69e5d5a2cd9e7eb98acb7558aaeabd7d4a2f95a45d0fb4c4b50ac0380a255550b1d5ba3debc9008af0f4cb84ec4acafe926d7228f961fedffc148d91292fc7
+   Version: 3.70.3
+   checksum32: 60414eed69b8a0ccddb6d5088914a74eaf634d5d4f92cf8d623e08a6788ce57b8b90903f8b826729a28ca00135868623895066b1c5833d049a04f7614d9d61d3
+   checksum64: fd5088b55b0650ea2843a13f36177756098fc2075e056ec619a0266ca6553d007fecabb7c5796750e514eaf311e752bae9c9c36b0cec34aefeab94dc9f711812
    checksumType: sha512
 
 File 'license.txt' is obtained from:
