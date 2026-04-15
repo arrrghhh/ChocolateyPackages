@@ -180,7 +180,10 @@ $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 try {
     $result = update -ChecksumFor none -NoCheckUrl -NoCheckChocoVersion
-    if ($Push -and $result.Updated) { Push-Package }
+    if ($Push -and $result.Updated) {
+        $nupkg = Get-ChildItem "$PSScriptRoot\*.nupkg" | Select-Object -First 1
+        choco push $nupkg.FullName --source https://push.chocolatey.org/
+    }
 } finally {
     if ($null -ne $global:Driver) {
         Write-Log "Closing browser session..."
