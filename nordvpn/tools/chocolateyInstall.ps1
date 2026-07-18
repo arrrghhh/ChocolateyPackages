@@ -7,7 +7,7 @@ $packageArgs = @{
     packageName    = $packageName
     fileType       = 'exe'
     # AU will keep this URL and checksum current on every update
-    url            = 'https://downloads.nordcdn.com/apps/windows/NordVPN/8.6.1.0/NordVPNInstall.exe'
+    url            = 'https://downloads.nordcdn.com/apps/windows/NordVPN/8.7.2.0/NordVPNInstall.exe'
     checksum       = ''
     checksumType   = ''
     # NordVPN uses InnoSetup -- /VERYSILENT fully suppresses UI
