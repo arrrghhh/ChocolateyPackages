@@ -19,7 +19,11 @@ foreach ($Dir in $PackageDirs) {
     # functions (au_GetLatest, au_SearchReplace, au_BeforeUpdate, etc.) in
     # this session. Without clearing them, a package that doesn't define
     # its own hook can silently inherit and run a previous package's hook.
-    Get-ChildItem function:global:au_* -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
+    $StaleHooks = Get-ChildItem function:au_* -ErrorAction SilentlyContinue
+    if ($StaleHooks) {
+        Write-Log "Clearing stale AU hooks: $($StaleHooks.Name -join ', ')" -Color Yellow
+        $StaleHooks | Remove-Item -Force -ErrorAction SilentlyContinue
+    }
 
 
     Push-Location $Dir
