@@ -18,30 +18,39 @@ $GeckoDriverDirectory = Get-GeckoDriver
 # --- 3. AU Functions ---
 
 function global:au_GetLatest {
-    Write-Log "Navigating to: $ReleasePage"
-    $global:Driver.Navigate().GoToUrl($ReleasePage)
+    Write-Log "Fetching: $ReleasePage"
+    $Response = Invoke-WebRequest -Uri $ReleasePage -UseBasicParsing
 
-    try {
-        $XPathQuery      = "//option[contains(@data-file, 'Windows') and contains(@data-file, 'msi.zip')]"
-        $DownloadElement = $global:Driver.FindElement([OpenQA.Selenium.By]::XPath($XPathQuery))
-        $url32           = $DownloadElement.GetAttribute("data-file")
-    } catch {
-        throw "Critical Failure: Could not find VNC Viewer download link. The site structure may have changed."
+    $Match = [regex]::Match(
+        $Response.Content,
+        '<script type="application/json" class="rvnc-mass-config"[^>]*>(?<json>.*?)</script>',
+        'Singleline'
+    )
+    if (-not $Match.Success) {
+        throw "Critical Failure: Could not find rvnc-mass-config JSON block. The page structure may have changed."
     }
 
-    $version = (Get-Version $url32).Version
+    $Config = $Match.Groups['json'].Value | ConvertFrom-Json
+    $ViewerWindows = $Config.index.products.'realvnc-connect-viewer'.platforms.windows
+    $ZipFile = $ViewerWindows.files | Where-Object { $_.pkg -eq 'zip' } | Select-Object -First 1
+
+    if (-not $ZipFile) {
+        throw "Critical Failure: No Windows zip package found for realvnc-connect-viewer in config JSON."
+    }
+
+    $version = $ZipFile.version
     Write-Log "Found version: $version" -Color Cyan
 
-    # Short-circuit: skip expensive operations if version hasn't changed
+    $url = "https://downloads.realvnc.com/download/file/realvnc-connect-viewer/$($ZipFile.file)"
+
     if (-not (Test-UpdateNeeded -RemoteVersion $version -PackageDir $PSScriptRoot)) {
-        return @{ Version = $version; URL32 = $url32 }
+        return @{ Version = $version; URL32 = $url }
     }
 
-    Write-Log "Found URL: $url32"
-
     return @{
-        URL32          = $url32
+        URL32          = $url
         Version        = $version
+        Checksum32     = $ZipFile.sha256
         ChecksumType32 = 'sha256'
     }
 }
@@ -55,26 +64,12 @@ function global:au_SearchReplace {
 }
 
 # --- 4. Main Execution ---
-if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory | Out-Null }
-
-Write-Log "Initializing Firefox (headless)..."
-$FirefoxOptions = New-Object OpenQA.Selenium.Firefox.FirefoxOptions
-$FirefoxOptions.AddArgument("--headless")
-$FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
-
-$global:Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
-$global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
-
 try {
-    $result = update -ChecksumFor 32
+    $result = update -ChecksumFor none
     if ($Push -and $result.Updated) {
         $nupkg = Get-ChildItem "$PSScriptRoot\*.nupkg" | Select-Object -First 1
         choco push $nupkg.FullName --source https://push.chocolatey.org/
     }
-} finally {
-    if ($null -ne $global:Driver) {
-        Write-Log "Closing browser session..."
-        $global:Driver.Quit()
-        $global:Driver.Dispose()
-    }
+} catch {
+    throw
 }
