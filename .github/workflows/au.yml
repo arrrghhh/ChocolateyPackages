@@ -22,7 +22,7 @@ jobs:
       github_token: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -44,9 +44,16 @@ jobs:
       - name: Run Master Update Script
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update_all.ps1 -Push
+          if ($env:GITHUB_REF -eq 'refs/heads/main') {
+            Write-Host "On main — pushing updates to Chocolatey." -ForegroundColor Green
+            ./update_all.ps1 -Push
+          } else {
+            Write-Host "Not on main ($env:GITHUB_REF) — building/testing only, skipping choco push." -ForegroundColor Yellow
+            ./update_all.ps1
+          }
 
       - name: Show Changes Summary
+        if: always()
         run: |
           $status = git status --porcelain
           if ($status) {
@@ -57,13 +64,14 @@ jobs:
           }
 
       - name: Commit and Push Changes
+        if: always()
         run: |
           git add .
           $status = git status --porcelain
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
             git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm') [skip ci]"
-            git push origin main
+            git push
           } else {
             Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }

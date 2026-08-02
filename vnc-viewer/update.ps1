@@ -10,9 +10,7 @@ if (-not (Get-Module -ListAvailable Selenium)) {
 Import-Module Selenium -Force
 
 # --- 2. Configuration ---
-$PackageId   = "vnc-viewer"
 $ReleasePage = 'https://realvnc.com/en/connect/download/viewer/'
-$ToolsDir    = "$PSScriptRoot\tools"
 
 $GeckoDriverDirectory = Get-GeckoDriver
 
@@ -22,27 +20,47 @@ function global:au_GetLatest {
     Write-Log "Navigating to: $ReleasePage"
     $global:Driver.Navigate().GoToUrl($ReleasePage)
 
-    try {
-        $XPathQuery    = "//option[contains(@data-file, '-Windows-msi.zip')]"
-        $DownloadElement = $global:Driver.FindElement([OpenQA.Selenium.By]::XPath($XPathQuery))
-        $url32         = $DownloadElement.GetAttribute("data-file")
-    } catch {
-        throw "Critical Failure: Could not find VNC Viewer download link. The site structure may have changed."
+    # Cloudflare's JS challenge needs a few seconds to resolve and redirect
+    # to the real page before the config JSON is present in the DOM.
+    $Timeout = 20
+    $Elapsed = 0
+    while ($global:Driver.PageSource -match 'Just a moment|challenge-platform' -and $Elapsed -lt $Timeout) {
+        Start-Sleep -Seconds 2
+        $Elapsed += 2
     }
 
-    $version = (Get-Version $url32).Version
+    $PageSource = $global:Driver.PageSource
+
+    $Match = [regex]::Match(
+        $PageSource,
+        '<script type="application/json" class="rvnc-mass-config"[^>]*>(?<json>.*?)</script>',
+        'Singleline'
+    )
+    if (-not $Match.Success) {
+        throw "Critical Failure: Could not find rvnc-mass-config JSON block. Either the Cloudflare challenge didn't clear in time, or the site structure changed."
+    }
+
+    $Config = $Match.Groups['json'].Value | ConvertFrom-Json
+    $ViewerWindows = $Config.index.products.'realvnc-connect-viewer'.platforms.windows
+    $ZipFile = $ViewerWindows.files | Where-Object { $_.pkg -eq 'zip' } | Select-Object -First 1
+
+    if (-not $ZipFile) {
+        throw "Critical Failure: No Windows zip package found for realvnc-connect-viewer in config JSON."
+    }
+
+    $version = $ZipFile.version
     Write-Log "Found version: $version" -Color Cyan
 
-    # Short-circuit: skip expensive operations if version hasn't changed
+    $url = "https://downloads.realvnc.com/download/file/realvnc-connect-viewer/$($ZipFile.file)"
+
     if (-not (Test-UpdateNeeded -RemoteVersion $version -PackageDir $PSScriptRoot)) {
-        return @{ Version = $version; URL32 = $url32 }
+        return @{ Version = $version; URL32 = $url }
     }
 
-    Write-Log "Found URL: $url32"
-
     return @{
-        URL32          = $url32
+        URL32          = $url
         Version        = $version
+        Checksum32     = $ZipFile.sha256
         ChecksumType32 = 'sha256'
     }
 }
@@ -56,18 +74,35 @@ function global:au_SearchReplace {
 }
 
 # --- 4. Main Execution ---
-if (-not (Test-Path $ToolsDir)) { New-Item $ToolsDir -ItemType Directory | Out-Null }
-
 Write-Log "Initializing Firefox (headless)..."
 $FirefoxOptions = New-Object OpenQA.Selenium.Firefox.FirefoxOptions
 $FirefoxOptions.AddArgument("--headless")
 $FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
 
+# Reduce automation fingerprint for Cloudflare's bot detection
+$FirefoxOptions.SetPreference("dom.webdriver.enabled", $false)
+$FirefoxOptions.SetPreference("useAutomationExtension", $false)
+
 $global:Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
+$MaxAttempts = 3
+
 try {
-    $result = update -ChecksumFor 32
+    $result = $null
+    for ($Attempt = 1; $Attempt -le $MaxAttempts; $Attempt++) {
+        try {
+            $result = update -ChecksumFor none
+            break
+        } catch {
+            Write-Log "Attempt ${Attempt}/${MaxAttempts} failed: $($_.Exception.Message)" -Color Red
+            if ($Attempt -eq $MaxAttempts) { throw }
+            $WaitSec = 30 * $Attempt   # 30s, then 60s
+            Write-Log "Backing off for ${WaitSec}s before retry..." -Color Yellow
+            Start-Sleep -Seconds $WaitSec
+        }
+    }
+
     if ($Push -and $result.Updated) {
         $nupkg = Get-ChildItem "$PSScriptRoot\*.nupkg" | Select-Object -First 1
         choco push $nupkg.FullName --source https://push.chocolatey.org/
