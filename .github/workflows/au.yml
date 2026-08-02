@@ -47,6 +47,7 @@ jobs:
           ./update_all.ps1 -Push
 
       - name: Show Changes Summary
+        if: always()
         run: |
           $status = git status --porcelain
           if ($status) {
@@ -57,6 +58,7 @@ jobs:
           }
 
       - name: Commit and Push Changes
+        if: always()
         run: |
           git add .
           $status = git status --porcelain
