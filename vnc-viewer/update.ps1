@@ -10,7 +10,6 @@ if (-not (Get-Module -ListAvailable Selenium)) {
 Import-Module Selenium -Force
 
 # --- 2. Configuration ---
-$PackageId   = "vnc-viewer"
 $ReleasePage = 'https://realvnc.com/en/connect/download/viewer/'
 $ToolsDir    = "$PSScriptRoot\tools"
 
@@ -23,9 +22,9 @@ function global:au_GetLatest {
     $global:Driver.Navigate().GoToUrl($ReleasePage)
 
     try {
-        $XPathQuery    = "//option[contains(@data-file, '-Windows-msi.zip')]"
+        $XPathQuery      = "//option[contains(@data-file, 'Windows') and contains(@data-file, 'msi.zip')]"
         $DownloadElement = $global:Driver.FindElement([OpenQA.Selenium.By]::XPath($XPathQuery))
-        $url32         = $DownloadElement.GetAttribute("data-file")
+        $url32           = $DownloadElement.GetAttribute("data-file")
     } catch {
         throw "Critical Failure: Could not find VNC Viewer download link. The site structure may have changed."
     }
