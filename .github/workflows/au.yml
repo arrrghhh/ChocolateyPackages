@@ -44,7 +44,13 @@ jobs:
       - name: Run Master Update Script
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          ./update_all.ps1 -Push
+          if ($env:GITHUB_REF -eq 'refs/heads/main') {
+            Write-Host "On main — pushing updates to Chocolatey." -ForegroundColor Green
+            ./update_all.ps1 -Push
+          } else {
+            Write-Host "Not on main ($env:GITHUB_REF) — building/testing only, skipping choco push." -ForegroundColor Yellow
+            ./update_all.ps1
+          }
 
       - name: Show Changes Summary
         if: always()
