@@ -19,7 +19,7 @@ $GeckoDriverDirectory = Get-GeckoDriver
 
 function global:au_GetLatest {
     Write-Log "Fetching: $ReleasePage"
-    $Response = Invoke-WebRequest -Uri $ReleasePage -UseBasicParsing
+    $Response = Invoke-WebRequest -Uri $ReleasePage -UseBasicParsing -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chocolatey-AU-VNCViewer'
 
     $Match = [regex]::Match(
         $Response.Content,
