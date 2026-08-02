@@ -71,7 +71,7 @@ jobs:
           if ($status) {
             Write-Host "Changes detected. Committing..." -ForegroundColor Cyan
             git commit -m "Automated update: $(Get-Date -Format 'yyyy-MM-dd HH:mm') [skip ci]"
-            git push origin main
+            git push
           } else {
             Write-Host "No changes detected. Skipping commit." -ForegroundColor Gray
           }
