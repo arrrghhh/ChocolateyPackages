@@ -15,6 +15,13 @@ foreach ($Dir in $PackageDirs) {
     Write-Log "[Package: $PackageName]" -Color Cyan
     Write-Log "Location: $Dir"
 
+    # Dot-sourcing each package's update.ps1 leaves its `global:au_*` hook
+    # functions (au_GetLatest, au_SearchReplace, au_BeforeUpdate, etc.) in
+    # this session. Without clearing them, a package that doesn't define
+    # its own hook can silently inherit and run a previous package's hook.
+    Get-ChildItem function:global:au_* -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
+
+
     Push-Location $Dir
     try {
         if (Test-Path "update.ps1") {
