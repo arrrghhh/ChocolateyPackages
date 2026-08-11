@@ -77,6 +77,8 @@ function global:au_SearchReplace {
 # --- 4. Main Execution ---
 Write-Log "Initializing Chrome (headless, software WebGL)..."
 
+$ChromeDriverDirectory = Get-ChromeDriver
+
 $ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
 $ChromeOptions.AddArgument("--headless=new")
 $ChromeOptions.AddArgument("--window-size=1920,1080")
@@ -85,8 +87,15 @@ $ChromeOptions.AddArgument("--disable-blink-features=AutomationControlled")
 $ChromeOptions.AddExcludedArgument("enable-automation")
 $ChromeOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
 
-# Chrome is auto-detected on the runner; Selenium Manager provisions chromedriver.
-$global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeOptions)
+# Point ChromeDriver at the Chrome binary installed by browser-actions/setup-chrome
+# (avoids Selenium Manager, which ignores PATH chromedriver and can pick a stale one).
+$ChromeExe = (Get-Command chrome.exe -ErrorAction SilentlyContinue).Source
+if ($ChromeExe) {
+    Write-Log "Chrome binary: $ChromeExe" -Color Gray
+    $ChromeOptions.BinaryLocation = $ChromeExe
+}
+
+$global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 $MaxAttempts = 3
