@@ -35,6 +35,11 @@ jobs:
       - name: Install PowerShell Modules
         run: Install-Module au -Force -Scope CurrentUser -AllowClobber
 
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          install-chromedriver: true
+
       - name: Setup Chocolatey API Key
         run: |
           if ($env:CHOCO_API_KEY -ne "") {
