@@ -55,6 +55,33 @@ function Get-GeckoDriver {
     return $Dest
 }
 
+function Get-ChromeDriver {
+    <#
+    .SYNOPSIS
+        Locates chromedriver.exe on the system (installed by browser-actions/setup-chrome in CI).
+    .OUTPUTS
+        The directory path containing chromedriver.exe.
+    #>
+    $FoundCmd = Get-Command chromedriver.exe -ErrorAction SilentlyContinue
+    $PossiblePaths = @(
+        "C:\webdrivers",
+        "C:\ProgramData\chocolatey\bin",
+        $PSScriptRoot,
+        "$PSScriptRoot\tools"
+    )
+
+    if ($null -ne $FoundCmd) { $PossiblePaths += Split-Path $FoundCmd.Path }
+
+    foreach ($Path in $PossiblePaths) {
+        if ($null -ne $Path -and (Test-Path "$Path\chromedriver.exe")) {
+            Write-Log "Found chromedriver at: $Path" -Color Gray
+            return $Path
+        }
+    }
+
+    throw "chromedriver.exe not found. Run browser-actions/setup-chrome with install-chromedriver: true in the workflow, or add chromedriver.exe to PATH."
+}
+
 function Test-UpdateNeeded {
     <#
     .SYNOPSIS
@@ -91,4 +118,4 @@ function Test-UpdateNeeded {
     return $true
 }
 
-Export-ModuleMember -Function Write-Log, Get-GeckoDriver, Test-UpdateNeeded
+Export-ModuleMember -Function Write-Log, Get-GeckoDriver, Get-ChromeDriver, Test-UpdateNeeded

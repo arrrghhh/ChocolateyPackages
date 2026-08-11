@@ -35,6 +35,12 @@ jobs:
       - name: Install PowerShell Modules
         run: Install-Module au -Force -Scope CurrentUser -AllowClobber
 
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
       - name: Setup Chocolatey API Key
         run: |
           if ($env:CHOCO_API_KEY -ne "") {
@@ -64,7 +70,7 @@ jobs:
           }
 
       - name: Commit and Push Changes
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           git add .
           $status = git status --porcelain
