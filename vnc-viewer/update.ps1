@@ -105,19 +105,6 @@ if ($ChromeExe) {
 $global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
-# Hide the WebDriver automation marker from Cloudflare's Turnstile.
-# (ChromeDriver injects navigator.webdriver=true; --disable-blink-features
-# does not remove it, but an early CDP script override does.)
-try {
-    $global:Driver.ExecuteCdpCommand(
-        "Page.addScriptToEvaluateOnNewDocument",
-        @{ source = "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });" }
-    )
-    Write-Log "Installed navigator.webdriver override via CDP." -Color Gray
-} catch {
-    Write-Log "Could not install CDP override: $($_.Exception.Message)" -Color Yellow
-}
-
 $MaxAttempts = 3
 
 try {
