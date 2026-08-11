@@ -80,12 +80,14 @@ function global:au_SearchReplace {
 }
 
 # --- 4. Main Execution ---
-Write-Log "Initializing Chrome (headless, software WebGL)..."
+Write-Log "Initializing Chrome (headful, software WebGL)..."
 
 $ChromeDriverDirectory = Get-ChromeDriver
 
 $ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-$ChromeOptions.AddArgument("--headless=new")
+# Chrome runs headed (no --headless). Cloudflare's bot detection 403s
+# headless Chrome even from residential IPs, but headed Chrome passes.
+Write-Log "Chrome headful mode" -Color Gray
 $ChromeOptions.AddArgument("--window-size=1920,1080")
 $ChromeOptions.AddArgument("--enable-unsafe-swiftshader")
 $ChromeOptions.AddArgument("--disable-blink-features=AutomationControlled")
