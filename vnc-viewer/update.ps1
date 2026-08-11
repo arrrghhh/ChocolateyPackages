@@ -21,7 +21,7 @@ function global:au_GetLatest {
     # Cloudflare's JS challenge needs a few seconds to resolve and redirect
     # to the real page before the config JSON is present in the DOM. Poll for
     # the config script itself rather than guessing at challenge markers.
-    $Timeout = 20
+    $Timeout = 30
     $Elapsed = 0
     while ($Elapsed -lt $Timeout) {
         $PageSource = $global:Driver.PageSource
@@ -31,6 +31,11 @@ function global:au_GetLatest {
     }
 
     $PageSource = $global:Driver.PageSource
+
+    if ($PageSource -notmatch 'rvnc-mass-config') {
+        $HasChallenge = [bool]($PageSource -match 'Just a moment|challenge-platform|Verify you are human|cf-chl|Turnstile')
+        Write-Log "Config not found. Page title: '$($global:Driver.Title)'. Challenge markers present: $HasChallenge" -Color Yellow
+    }
 
     $Match = [regex]::Match(
         $PageSource,
@@ -97,6 +102,19 @@ if ($ChromeExe) {
 
 $global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
+
+# Hide the WebDriver automation marker from Cloudflare's Turnstile.
+# (ChromeDriver injects navigator.webdriver=true; --disable-blink-features
+# does not remove it, but an early CDP script override does.)
+try {
+    $global:Driver.ExecuteCdpCommand(
+        "Page.addScriptToEvaluateOnNewDocument",
+        @{ source = "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });" }
+    )
+    Write-Log "Installed navigator.webdriver override via CDP." -Color Gray
+} catch {
+    Write-Log "Could not install CDP override: $($_.Exception.Message)" -Color Yellow
+}
 
 $MaxAttempts = 3
 
