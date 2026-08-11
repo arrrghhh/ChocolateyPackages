@@ -64,7 +64,7 @@ jobs:
           }
 
       - name: Commit and Push Changes
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           git add .
           $status = git status --porcelain
