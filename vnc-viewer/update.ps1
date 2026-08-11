@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-# Import shared helpers (Write-Log, Get-GeckoDriver, Test-UpdateNeeded)
+# Import shared helpers (Write-Log, Test-UpdateNeeded)
 Import-Module "$PSScriptRoot\..\helpers.psm1" -Force
 
 # --- 1. Module Loading ---
@@ -12,8 +12,6 @@ Import-Module Selenium -Force
 # --- 2. Configuration ---
 $ReleasePage = 'https://realvnc.com/en/connect/download/viewer/'
 
-$GeckoDriverDirectory = Get-GeckoDriver
-
 # --- 3. AU Functions ---
 
 function global:au_GetLatest {
@@ -21,10 +19,13 @@ function global:au_GetLatest {
     $global:Driver.Navigate().GoToUrl($ReleasePage)
 
     # Cloudflare's JS challenge needs a few seconds to resolve and redirect
-    # to the real page before the config JSON is present in the DOM.
+    # to the real page before the config JSON is present in the DOM. Poll for
+    # the config script itself rather than guessing at challenge markers.
     $Timeout = 20
     $Elapsed = 0
-    while ($global:Driver.PageSource -match 'Just a moment|challenge-platform' -and $Elapsed -lt $Timeout) {
+    while ($Elapsed -lt $Timeout) {
+        $PageSource = $global:Driver.PageSource
+        if ($PageSource -match 'rvnc-mass-config') { break }
         Start-Sleep -Seconds 2
         $Elapsed += 2
     }
@@ -74,16 +75,18 @@ function global:au_SearchReplace {
 }
 
 # --- 4. Main Execution ---
-Write-Log "Initializing Firefox (headless)..."
-$FirefoxOptions = New-Object OpenQA.Selenium.Firefox.FirefoxOptions
-$FirefoxOptions.AddArgument("--headless")
-$FirefoxOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
+Write-Log "Initializing Chrome (headless, software WebGL)..."
 
-# Reduce automation fingerprint for Cloudflare's bot detection
-$FirefoxOptions.SetPreference("dom.webdriver.enabled", $false)
-$FirefoxOptions.SetPreference("useAutomationExtension", $false)
+$ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
+$ChromeOptions.AddArgument("--headless=new")
+$ChromeOptions.AddArgument("--window-size=1920,1080")
+$ChromeOptions.AddArgument("--enable-unsafe-swiftshader")
+$ChromeOptions.AddArgument("--disable-blink-features=AutomationControlled")
+$ChromeOptions.AddExcludedArgument("enable-automation")
+$ChromeOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
 
-$global:Driver = New-Object OpenQA.Selenium.Firefox.FirefoxDriver($GeckoDriverDirectory, $FirefoxOptions)
+# Chrome is auto-detected on the runner; Selenium Manager provisions chromedriver.
+$global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 
 $MaxAttempts = 3
