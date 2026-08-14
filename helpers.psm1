@@ -58,14 +58,26 @@ function Get-GeckoDriver {
 function Get-ChromeDriver {
     <#
     .SYNOPSIS
-        Locates chromedriver.exe on the system (installed by browser-actions/setup-chrome in CI).
+        Locates a chromedriver.exe compatible with the installed Chrome.
+        If only a mismatched driver is present (Chrome/ChromeDriver drift),
+        downloads the exact-matching driver from chrome-for-testing.
+    .PARAMETER ChromeVersion
+        The installed Chrome version (e.g. 151.0.7922.72). When provided, the
+        driver's major version must match Chrome's major version.
     .OUTPUTS
-        The directory path containing chromedriver.exe.
+        The directory path containing a compatible chromedriver.exe.
     #>
+    param(
+        [string]$ChromeVersion
+    )
+
+    $DesiredMajor = if ($ChromeVersion) { ($ChromeVersion -split '\.')[0] } else { $null }
+
     $FoundCmd = Get-Command chromedriver.exe -ErrorAction SilentlyContinue
     $PossiblePaths = @(
         "C:\webdrivers",
         "C:\ProgramData\chocolatey\bin",
+        "C:\hostedtoolcache\windows\setup-chrome\chromedriver\stable\x64",
         $PSScriptRoot,
         "$PSScriptRoot\tools"
     )
@@ -74,12 +86,62 @@ function Get-ChromeDriver {
 
     foreach ($Path in $PossiblePaths) {
         if ($null -ne $Path -and (Test-Path "$Path\chromedriver.exe")) {
-            Write-Log "Found chromedriver at: $Path" -Color Gray
+            $DriverVersion = (Get-Item "$Path\chromedriver.exe").VersionInfo.ProductVersion
+            $DriverMajor = ($DriverVersion -split '\.')[0]
+            if ($DesiredMajor -and $DriverMajor -ne $DesiredMajor) {
+                Write-Log "chromedriver $DriverVersion does not match Chrome $ChromeVersion — ignoring $Path" -Color Yellow
+                continue
+            }
+            Write-Log "Found chromedriver $DriverVersion at: $Path" -Color Gray
             return $Path
         }
     }
 
+    if ($DesiredMajor) {
+        Write-Log "No compatible chromedriver for Chrome $ChromeVersion — downloading matching driver..." -Color Cyan
+        return Get-MatchingChromeDriver -ChromeVersion $ChromeVersion
+    }
+
     throw "chromedriver.exe not found. Run browser-actions/setup-chrome with install-chromedriver: true in the workflow, or add chromedriver.exe to PATH."
+}
+
+function Get-MatchingChromeDriver {
+    <#
+    .SYNOPSIS
+        Downloads the chromedriver matching the given Chrome version from
+        chrome-for-testing and returns the extracted driver directory.
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$ChromeVersion
+    )
+
+    $Major = ($ChromeVersion -split '\.')[0]
+    $Dir = Join-Path $env:TEMP "chromedriver-$ChromeVersion"
+    $ExeDir = Join-Path $Dir "chromedriver-win64"
+
+    if (Test-Path (Join-Path $ExeDir "chromedriver.exe")) {
+        return $ExeDir
+    }
+
+    New-Item -ItemType Directory -Force -Path $Dir | Out-Null
+    $Versions = (Invoke-RestMethod -Uri "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json").versions
+    $Entry = $Versions | Where-Object { $_.version -eq $ChromeVersion } | Select-Object -First 1
+    if (-not $Entry) {
+        $Entry = $Versions | Where-Object { $_.version -like "$Major.*" } | Select-Object -Last 1
+    }
+    if (-not $Entry) { throw "No chromedriver available for Chrome $ChromeVersion." }
+
+    $Win64 = $Entry.downloads.chromedriver | Where-Object { $_.platform -eq 'win64' } | Select-Object -First 1
+    if (-not $Win64) { throw "No win64 chromedriver for Chrome $($Entry.version)." }
+
+    $Zip = Join-Path $Dir "chromedriver.zip"
+    Write-Log "Downloading chromedriver $($Entry.version)..." -Color Gray
+    Invoke-WebRequest -Uri $Win64.url -UseBasicParsing -OutFile $Zip
+    Expand-Archive -Path $Zip -DestinationPath $Dir -Force
+    Remove-Item $Zip -Force
+
+    return $ExeDir
 }
 
 function Test-UpdateNeeded {
