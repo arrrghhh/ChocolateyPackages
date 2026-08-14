@@ -82,8 +82,6 @@ function global:au_SearchReplace {
 # --- 4. Main Execution ---
 Write-Log "Initializing Chrome (headful, software WebGL)..."
 
-$ChromeDriverDirectory = Get-ChromeDriver
-
 $ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
 # Chrome runs headed (no --headless). Cloudflare's bot detection 403s
 # headless Chrome even from residential IPs, but headed Chrome passes.
@@ -97,10 +95,18 @@ $ChromeOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
 # Point ChromeDriver at the Chrome binary installed by browser-actions/setup-chrome
 # (avoids Selenium Manager, which ignores PATH chromedriver and can pick a stale one).
 $ChromeExe = (Get-Command chrome.exe -ErrorAction SilentlyContinue).Source
+$ChromeVersion = $null
 if ($ChromeExe) {
     Write-Log "Chrome binary: $ChromeExe" -Color Gray
     $ChromeOptions.BinaryLocation = $ChromeExe
+    $ChromeVersion = (Get-Item $ChromeExe).VersionInfo.ProductVersion
+    Write-Log "Chrome version: $ChromeVersion" -Color Gray
 }
+
+# Get a chromedriver that matches the installed Chrome. If setup-chrome's
+# "stable" driver drifts from the actual Chrome (e.g. image cache lags), a
+# matching driver is downloaded automatically.
+$ChromeDriverDirectory = Get-ChromeDriver -ChromeVersion $ChromeVersion
 
 $global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
 $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
