@@ -44,4 +44,8 @@ function global:au_SearchReplace {
     }
 }
 
-update
+$result = update
+if ($Push -and $result.Updated) {
+    $nupkg = Get-ChildItem "$PSScriptRoot\*.nupkg" | Select-Object -First 1
+    choco push $nupkg.FullName --source https://push.chocolatey.org/
+}
