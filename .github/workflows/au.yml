@@ -17,7 +17,6 @@ jobs:
       run:
         shell: pwsh
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
       github_token: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -36,7 +35,7 @@ jobs:
         run: Install-Module au -Force -Scope CurrentUser -AllowClobber
 
       - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         with:
           chrome-version: stable
           install-chromedriver: true
