@@ -12,9 +12,14 @@ $ErrorActionPreference = 'Stop'
 
 $wingetManifestUrl = 'https://api.github.com/repos/microsoft/winget-pkgs/contents/manifests/n/NordSecurity/NordVPN'
 
+$githubHeaders = @{}
+if ($env:github_token) {
+    $githubHeaders.Authorization = "Bearer $env:github_token"
+}
+
 function global:au_GetLatest {
     # GitHub API returns a list of version directories; pick the highest
-    $versions = Invoke-RestMethod -Uri $wingetManifestUrl -UseBasicParsing
+    $versions = Invoke-RestMethod -Uri $wingetManifestUrl -Headers $githubHeaders -UseBasicParsing
     $version = $versions |
         Where-Object { $_.type -eq 'dir' } |
         Select-Object -ExpandProperty name |
