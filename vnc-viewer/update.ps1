@@ -21,7 +21,7 @@ function global:au_GetLatest {
     # Cloudflare's JS challenge needs a few seconds to resolve and redirect
     # to the real page before the config JSON is present in the DOM. Poll for
     # the config script itself rather than guessing at challenge markers.
-    $Timeout = 30
+    $Timeout = 60
     $Elapsed = 0
     while ($Elapsed -lt $Timeout) {
         $PageSource = $global:Driver.PageSource
@@ -82,34 +82,49 @@ function global:au_SearchReplace {
 # --- 4. Main Execution ---
 Write-Log "Initializing Chrome (headful, software WebGL)..."
 
-$ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-# Chrome runs headed (no --headless). Cloudflare's bot detection 403s
-# headless Chrome even from residential IPs, but headed Chrome passes.
-Write-Log "Chrome headful mode" -Color Gray
-$ChromeOptions.AddArgument("--window-size=1920,1080")
-$ChromeOptions.AddArgument("--enable-unsafe-swiftshader")
-$ChromeOptions.AddArgument("--disable-blink-features=AutomationControlled")
-$ChromeOptions.AddExcludedArgument("enable-automation")
-$ChromeOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
+function New-VncChromeSession {
+    <#
+    .SYNOPSIS
+        Starts a fresh headful ChromeDriver session. Re-created per retry so a
+        Cloudflare 403 from one session doesn't poison the next attempt.
+    #>
+    if ($null -ne $global:Driver) {
+        Write-Log "Closing previous Chrome session..." -Color Gray
+        try { $global:Driver.Quit() } catch { }
+        try { $global:Driver.Dispose() } catch { }
+    }
 
-# Point ChromeDriver at the Chrome binary installed by browser-actions/setup-chrome
-# (avoids Selenium Manager, which ignores PATH chromedriver and can pick a stale one).
-$ChromeExe = (Get-Command chrome.exe -ErrorAction SilentlyContinue).Source
-$ChromeVersion = $null
-if ($ChromeExe) {
-    Write-Log "Chrome binary: $ChromeExe" -Color Gray
-    $ChromeOptions.BinaryLocation = $ChromeExe
-    $ChromeVersion = (Get-Item $ChromeExe).VersionInfo.ProductVersion
-    Write-Log "Chrome version: $ChromeVersion" -Color Gray
+    $ChromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
+    # Chrome runs headed (no --headless). Cloudflare's bot detection 403s
+    # headless Chrome even from residential IPs, but headed Chrome passes.
+    Write-Log "Chrome headful mode" -Color Gray
+    $ChromeOptions.AddArgument("--window-size=1920,1080")
+    $ChromeOptions.AddArgument("--enable-unsafe-swiftshader")
+    $ChromeOptions.AddArgument("--disable-blink-features=AutomationControlled")
+    $ChromeOptions.AddExcludedArgument("enable-automation")
+    $ChromeOptions.PageLoadStrategy = [OpenQA.Selenium.PageLoadStrategy]::Eager
+
+    # Point ChromeDriver at the Chrome binary installed by browser-actions/setup-chrome
+    # (avoids Selenium Manager, which ignores PATH chromedriver and can pick a stale one).
+    $ChromeExe = (Get-Command chrome.exe -ErrorAction SilentlyContinue).Source
+    $ChromeVersion = $null
+    if ($ChromeExe) {
+        Write-Log "Chrome binary: $ChromeExe" -Color Gray
+        $ChromeOptions.BinaryLocation = $ChromeExe
+        $ChromeVersion = (Get-Item $ChromeExe).VersionInfo.ProductVersion
+        Write-Log "Chrome version: $ChromeVersion" -Color Gray
+    }
+
+    # Get a chromedriver that matches the installed Chrome. If setup-chrome's
+    # "stable" driver drifts from the actual Chrome (e.g. image cache lags), a
+    # matching driver is downloaded automatically.
+    $ChromeDriverDirectory = Get-ChromeDriver -ChromeVersion $ChromeVersion
+
+    $global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
+    $global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
 }
 
-# Get a chromedriver that matches the installed Chrome. If setup-chrome's
-# "stable" driver drifts from the actual Chrome (e.g. image cache lags), a
-# matching driver is downloaded automatically.
-$ChromeDriverDirectory = Get-ChromeDriver -ChromeVersion $ChromeVersion
-
-$global:Driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($ChromeDriverDirectory, $ChromeOptions)
-$global:Driver.Manage().Timeouts().ImplicitWait = [TimeSpan]::FromSeconds(10)
+New-VncChromeSession
 
 $MaxAttempts = 3
 
@@ -125,6 +140,7 @@ try {
             $WaitSec = 30 * $Attempt   # 30s, then 60s
             Write-Log "Backing off for ${WaitSec}s before retry..." -Color Yellow
             Start-Sleep -Seconds $WaitSec
+            New-VncChromeSession
         }
     }
 
