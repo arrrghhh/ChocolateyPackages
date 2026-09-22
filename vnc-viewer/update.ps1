@@ -126,7 +126,7 @@ function New-VncChromeSession {
 
 New-VncChromeSession
 
-$MaxAttempts = 3
+$MaxAttempts = 5
 
 try {
     $result = $null
@@ -137,7 +137,7 @@ try {
         } catch {
             Write-Log "Attempt ${Attempt}/${MaxAttempts} failed: $($_.Exception.Message)" -Color Red
             if ($Attempt -eq $MaxAttempts) { throw }
-            $WaitSec = 30 * $Attempt   # 30s, then 60s
+            $WaitSec = [int](15 * [Math]::Pow(2, $Attempt - 1))   # 15s, 30s, 60s, 120s
             Write-Log "Backing off for ${WaitSec}s before retry..." -Color Yellow
             Start-Sleep -Seconds $WaitSec
             New-VncChromeSession
