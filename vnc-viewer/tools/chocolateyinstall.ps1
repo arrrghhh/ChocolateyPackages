@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $packageName    = 'vnc-viewer'
 $toolsDir       = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 $extractDir     = "$toolsDir\extracted"
-$url            = 'https://downloads.realvnc.com/download/file/realvnc-connect-viewer/RealVNC-Connect-Viewer-8.5.3-Windows.msi.zip'
-$checksum       = '034c206f36ead3ce48d6a08f00796c16cdf818944c3b2027617221498b397479'
+$url            = 'https://downloads.realvnc.com/download/file/realvnc-connect-viewer/RealVNC-Connect-Viewer-8.6.0-Windows.msi.zip'
+$checksum       = '538a9a1c5a80bd5d163d2af9e0c04a2177f7df5a7a88f25cacf7405056741e54'
 $checksumType   = 'sha256'
 
 $packageArgs = @{
